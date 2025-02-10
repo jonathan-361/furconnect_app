@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
+import 'package:furconnect/features/data/services/api_service.dart';
+import 'package:furconnect/features/data/services/login_service.dart';
 
 class Profile extends StatelessWidget {
   const Profile({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loginService = LoginService(ApiService());
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil'),
@@ -84,6 +89,7 @@ class Profile extends StatelessWidget {
               const SizedBox(height: 32),
               TextButton(
                 onPressed: () {
+                  loginService.logout();
                   context.go('/login'); // Cerrar sesión
                 },
                 style: TextButton.styleFrom(

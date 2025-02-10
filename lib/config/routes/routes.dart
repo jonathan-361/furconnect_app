@@ -5,7 +5,11 @@ import 'package:furconnect/features/presentation/page/register_page/register.dar
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/botton_navigation_bar/botton_navigation_bar.dart';
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
+import 'package:furconnect/features/presentation/widget/pet_card.dart';
 import 'package:furconnect/features/presentation/page/pet_page/new_pet.dart';
+
+//import 'package:furconnect/features/presentation/page/pet_page/my_pets-beta.dart';
+//import 'package:furconnect/features/presentation/widget/pet_card_beta.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -25,6 +29,10 @@ final router = GoRouter(
     GoRoute(
       path: '/myPets',
       builder: (context, state) => MyPets(),
+    ),
+    GoRoute(
+      path: '/petCard',
+      builder: (context, state) => PetCard(),
     ),
     GoRoute(
       path: '/newPet',

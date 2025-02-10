@@ -1,99 +1,154 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:furconnect/features/data/services/api_service.dart';
+import 'package:furconnect/features/data/services/login_service.dart';
 
 class PetService {
-  final Dio _dio = Dio();
+  final ApiService _apiService;
+  final LoginService _loginService;
 
-  // Obtener el token almacenado
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token'); // Cambié 'authToken' a 'token'
-  }
+  PetService(this._apiService, this._loginService);
 
-  // Solicitud GET para obtener las mascotas paginadas
-  Future<Map<String, dynamic>> getPets(int page, int limit) async {
+  Future<Map<String, dynamic>?> getPetById(String petId) async {
+    await _loginService.loadToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    final token = _loginService.authToken;
+
     try {
-      final token = await _getToken();
-
-      if (token == null) {
-        throw Exception('Token de autenticación no encontrado');
-      }
-
-      final response = await _dio.get(
-        'https://furconnect.onrender.com/api/pets',
-        queryParameters: {'page': page, 'limit': limit},
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
+      final response = await _apiService.get(
+        '/pets/$petId',
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
         return response.data;
       } else {
-        throw Exception('Error al obtener las mascotas');
+        throw Exception("Error al obtener la mascota.");
       }
-    } catch (e) {
-      throw Exception('Error: $e');
+    } on DioException catch (e) {
+      throw Exception("Error en la solicitud: ${e.message}");
     }
   }
 
-  // Añadir método para obtener mascota por ID
-  Future<Map<String, dynamic>> getPetById(String id) async {
+  Future<List<dynamic>> getPetsByOwner(String ownerId) async {
+    await _loginService.loadToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    final token = _loginService.authToken;
+
     try {
-      final token = await _getToken();
-
-      if (token == null) {
-        throw Exception('Token de autenticación no encontrado');
-      }
-
-      final response = await _dio.get(
-        'https://furconnect.onrender.com/api/pets/$id',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
+      final response = await _apiService.get(
+        '/pets/owner/$ownerId',
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
-        return response.data;
+        if (response.data.isEmpty) {
+          return [];
+        } else {
+          return response.data;
+        }
+      } else if (response.statusCode == 404) {
+        throw Exception("No tienes mascotas todavía");
       } else {
-        throw Exception('Error al obtener la mascota');
+        throw Exception("Error al obtener las mascotas.");
       }
-    } catch (e) {
-      throw Exception('Error: $e');
+    } on DioException catch (e) {
+      throw Exception("Error en la solicitud: ${e.message}");
     }
   }
 
-  // Poder agregar una nueva mascota POST
-  Future<void> postPet(Map<String, dynamic> petData) async {
+  Future<bool> addPet(
+    String nombre,
+    String raza,
+    String tipo,
+    String color,
+    String tamano,
+    int edad,
+    String sexo,
+    bool pedigree,
+    List<String> vacunas,
+    String temperamento,
+    String usuarioId,
+    List<String> media,
+  ) async {
+    await _loginService.loadToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+    final token = _loginService.authToken;
+
     try {
-      final token = await _getToken();
-
-      if (token == null) {
-        throw Exception('Token de autenticación no encontrado');
-      }
-
-      final response = await _dio.post(
-        'https://furconnect.onrender.com/api/newpet',
-        data: petData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
+      final response = await _apiService.post(
+        '/newpet',
+        data: {
+          "nombre": nombre,
+          "raza": raza,
+          "tipo": tipo,
+          "color": color,
+          "tamaño": tamano.toLowerCase(),
+          "edad": edad,
+          "sexo": sexo.toLowerCase(),
+          "pedigree": pedigree,
+          "vacunas": vacunas,
+          "temperamento": temperamento,
+          "usuario_id": usuarioId,
+          "media": media,
+        },
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
-      if (response.statusCode == 201) {
-        print('Mascota registrada correctamente');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Mascota agregada exitosamente.");
+        return true;
       } else {
-        throw Exception('Error al registrar la mascota');
+        throw Exception(
+            "Error al agregar la mascota: ${response.statusMessage}");
       }
-    } catch (e) {
-      throw Exception('Error: $e');
+    } on DioException catch (e) {
+      throw Exception("Error en la solicitud: ${e.message}");
+    }
+  }
+
+  Future<void> deletePet(String petId) async {
+    await _loginService.loadToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    final token = _loginService.authToken;
+
+    try {
+      final response = await _apiService.delete(
+        '/pets/$petId',
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Mascota eliminada exitosamente.");
+      } else {
+        throw Exception(
+            "Error al eliminar la mascota: ${response.statusMessage}");
+      }
+    } on DioException catch (e) {
+      throw Exception("Error en la solicitud: ${e.message}");
     }
   }
 }

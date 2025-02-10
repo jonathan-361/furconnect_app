@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+
+import 'package:furconnect/features/data/services/register_service.dart';
+import 'package:furconnect/features/data/services/api_service.dart';
 
 class Register extends StatefulWidget {
   Register({super.key});
@@ -16,6 +21,7 @@ class _RegisterState extends State<Register> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
   final TextEditingController stateController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
@@ -26,6 +32,39 @@ class _RegisterState extends State<Register> {
 
   bool _isCountrySelected = false;
   bool _isStateSelected = false;
+
+  final RegisterService _registerService = RegisterService(ApiService());
+
+  void _register() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      String fullName = '${nameController.text} ${lastNameController.text}';
+      try {
+        final success = await _registerService.registerUser(
+          fullName,
+          emailController.text,
+          passwordController.text,
+          phoneController.text,
+          cityController.text,
+          stateController.text,
+          countryController.text,
+        );
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cuenta creada correctamente')),
+          );
+        }
+      } on SocketException catch (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay conexión a Internet')),
+        );
+      } catch (err) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ocurrió un error desconocido')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +87,9 @@ class _RegisterState extends State<Register> {
                   counterText: '',
                 ),
                 maxLength: 25,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'El nombre es obligatorio';
@@ -64,6 +106,9 @@ class _RegisterState extends State<Register> {
                   counterText: '',
                 ),
                 maxLength: 25,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'El apellido es obligatorio';
@@ -170,6 +215,29 @@ class _RegisterState extends State<Register> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Número teléfonico',
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
+                maxLength: 10,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'El número teléfonico es obligatorio';
+                  }
+                  if (value.length != 10) {
+                    return 'Escribe un número telefónico válido';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: countryController,
                 decoration: const InputDecoration(
                   labelText: 'País',
@@ -177,6 +245,9 @@ class _RegisterState extends State<Register> {
                   counterText: '',
                 ),
                 maxLength: 18,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
                 onChanged: (value) {
                   setState(() {
                     _isCountrySelected = value.isNotEmpty;
@@ -202,6 +273,9 @@ class _RegisterState extends State<Register> {
                   counterText: '',
                 ),
                 maxLength: 18,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
                 enabled:
                     _isCountrySelected, // Habilitar solo si el país está seleccionado
                 onChanged: (value) {
@@ -228,6 +302,9 @@ class _RegisterState extends State<Register> {
                   counterText: '',
                 ),
                 maxLength: 18,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
                 enabled:
                     _isStateSelected, // Habilitar solo si el estado está seleccionado
                 validator: (value) {
@@ -240,17 +317,7 @@ class _RegisterState extends State<Register> {
               const SizedBox(height: 32),
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Validar el formulario
-                    if (_formKey.currentState!.validate()) {
-                      // Si es válido, hacer lo que necesites (guardar, navegar, etc.)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Formulario válido')),
-                      );
-                    } else {
-                      // Si no es válido, Flutter ya muestra los errores
-                    }
-                  },
+                  onPressed: _register,
                   child: const Text('Crear cuenta'),
                 ),
               ),

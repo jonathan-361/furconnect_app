@@ -9,7 +9,8 @@ class ApiService {
   ApiService()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: "https://furconnect.onrender.com/api/",
+            // baseUrl: "https://furconnect.onrender.com/api/",
+            baseUrl: "https://furconnect-api-copy.onrender.com/api/",
             // baseUrl: "http://localhost:3000/api/",
             connectTimeout: const Duration(seconds: 30),
             receiveTimeout: const Duration(seconds: 30),
@@ -48,6 +49,22 @@ class ApiService {
     }
 
     throw Exception("Error en la solicitud POST");
+  }
+
+  Future<Response> delete(String endpoint,
+      {Map<String, dynamic>? queryParams,
+      Map<String, dynamic>? headers}) async {
+    try {
+      return await _dio.delete(
+        endpoint,
+        queryParameters: queryParams,
+        options: Options(headers: headers),
+      );
+    } on DioException catch (e) {
+      _handleDioError(e);
+    }
+
+    throw Exception("Error en la solicitud DELETE");
   }
 
   void _handleDioError(DioException e) {

@@ -65,7 +65,11 @@ class PetService {
         throw Exception("Error al obtener las mascotas.");
       }
     } on DioException catch (e) {
-      throw Exception("Error en la solicitud: ${e.message}");
+      if (e.response?.statusCode == 404) {
+        throw Exception("No tienes mascotas todavía");
+      } else {
+        throw Exception("Error en la solicitud: ${e.message}");
+      }
     }
   }
 

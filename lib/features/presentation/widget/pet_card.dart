@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:furconnect/features/presentation/page/login_page/login.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -6,57 +7,15 @@ import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 
 class PetCard extends StatelessWidget {
-  const PetCard({super.key});
+  final Map<String, dynamic> petData;
 
-  Future<void> _deletePet(
-      Map<String, dynamic> pet, BuildContext context) async {
-    final loginService = LoginService(ApiService());
-    await loginService.loadToken();
-    final token = loginService.authToken;
-    final String? errorMessage;
-    if (token == null) {
-      errorMessage = 'No se encontro un token válido.';
-      print(errorMessage);
-      return;
-    }
-    final petService = PetService(ApiService(), loginService);
-
-    final petId = pet['_id'];
-    print('ID Mascota: $petId');
-
-    try {
-      await petService.deletePet(petId);
-      print("Mascota eliminada exitosamente.");
-    } catch (e) {
-      errorMessage = "Error al eliminar la mascota: $e";
-      print(errorMessage);
-    }
-  }
+  const PetCard({super.key, required this.petData});
 
   @override
   Widget build(BuildContext context) {
-    final pet = GoRouter.of(context).state.extra as Map<String, dynamic>?;
-
-    if (pet == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-        ),
-        body: const Center(
-            child: Text('No hay datos de la mascota seleccionada')),
-      );
-    }
-
-    String vacunasDisplay = '';
-    if (pet['vacunas'] is List) {
-      vacunasDisplay = (pet['vacunas'] as List).join(', ');
-    } else {
-      vacunasDisplay = pet['vacunas'] ?? 'No tiene';
-    }
-
-    String petImageUrl = pet['media'] != null && pet['media'].isNotEmpty
-        ? pet['media'][0].trim()
-        : '';
+    final apiService = ApiService();
+    final loginService = LoginService(apiService);
+    final petService = PetService(apiService, loginService);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,77 +27,156 @@ class PetCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: _loadPetImage(petImageUrl),
-            ),
-            SizedBox(height: 8),
-            Text(
-              _formatWord(pet['nombre']),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
             ),
             SizedBox(height: 8),
             Row(
               children: [
-                Text('Raza: '),
-                Text(_formatWord(pet['raza'])),
+                Text(
+                  _formatWord(petData['nombre']),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 10),
+                Wrap(
+                  children: [
+                    Icon(
+                      petData['sexo'].toLowerCase() == "macho"
+                          ? Icons.male
+                          : Icons.female,
+                      color: const Color.fromARGB(220, 79, 42, 15),
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Text(
+                  '${_formatWord(petData['tipo'])} - ',
+                ),
+                Text(_formatWord(petData['raza'])),
               ],
             ),
             SizedBox(height: 8),
             Row(
               children: [
-                Text('Tipo: '),
-                Text(_formatWord(pet['tipo'])),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Text('Color: '),
-                Text(_formatWord(pet['color'])),
+                Expanded(
+                  child: Container(
+                    width: 70,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 214, 214, 214),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Edad',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        Text(
+                          '${int.tryParse(petData['edad']?.toString() ?? '0')?.toString() ?? '0'} años',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    width: 70,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 214, 214, 214),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Color',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        Text(
+                          _formatWord(petData['color']),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    width: 70,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 214, 214, 214),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Pedigree',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        Text(
+                          '${petData['pedigree'] == true ? "Sí" : "No"}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 8),
             Row(
               children: [
                 Text('Tamaño: '),
-                Text(_formatWord(pet['tamaño'])),
+                Text(_formatWord(petData['tamaño'])),
               ],
             ),
             SizedBox(height: 8),
             Row(
-              children: [
-                Text('Edad: '),
-                Text('${pet['edad']}'),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Text('Sexo: '),
-                Text(_formatWord(pet['sexo'])),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Text('Pedigree: '),
-                Text(_formatWord(pet['pedigree'] ? 'Sí' : 'No')),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Vacunas: '),
-                Text(_formatWord(vacunasDisplay)),
+                Expanded(
+                  child: Text(
+                    petData['vacunas'].join(', '),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 15,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Historial de cruzas: '),
-                Text('${pet['historia_cruzas'] ?? 'No hay'}'),
+                Expanded(
+                  child: Text(
+                    petData['historial_cruzas'].isNotEmpty
+                        ? petData['historial_cruzas'].join(', ')
+                        : 'No se ha cruzado',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 15,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -153,7 +191,18 @@ class PetCard extends StatelessWidget {
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _showDeleteConfirmationDialog(context, pet);
+                try {
+                  petService.deletePet(petData['_id']).then((_) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Mascota eliminada exitosamente')),
+                    );
+                    context.pop(true);
+                  });
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al eliminar la mascota: $e')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 177, 24, 24),
@@ -171,67 +220,5 @@ class PetCard extends StatelessWidget {
   String _formatWord(String word) {
     if (word.isEmpty) return word;
     return word[0].toUpperCase() + word.substring(1).toLowerCase();
-  }
-
-  void _showDeleteConfirmationDialog(
-      BuildContext context, Map<String, dynamic> pet) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirmar eliminación'),
-          content: Text('¿Estás seguro de que deseas eliminar esta mascota?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancelar'),
-              onPressed: () {
-                context.pop();
-              },
-            ),
-            TextButton(
-              child: Text('Eliminar'),
-              onPressed: () {
-                context.pop();
-                try {
-                  _deletePet(pet, context);
-                  context.pop(true);
-                } catch (e) {
-                  print("Error al eliminar la mascota: $e");
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _loadPetImage(String imageUrl) {
-    String cleanImageUrl = imageUrl.trim();
-
-    return cleanImageUrl.isEmpty
-        ? Image.asset(
-            'assets/images/placeholder/pet_placeholder.jpg',
-            width: 200,
-            fit: BoxFit.fitWidth,
-          )
-        : Image.network(
-            cleanImageUrl,
-            width: 200,
-            fit: BoxFit.fitWidth,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) {
-                return child; // Imagen ya cargada
-              }
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
-                ),
-              ); // Mientras carga, muestra un indicador
-            },
-          );
   }
 }

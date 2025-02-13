@@ -78,7 +78,8 @@ class ApiService {
     } else if (e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       _logger.e("Error de tiempo de espera agotado");
-      throw Exception("Tiempo de espera agotado. Intenta nuevamente.");
+      // throw Exception("Tiempo de espera agotado. Intenta nuevamente.");
+      throw ("Tiempo de espera agotado. Intenta nuevamente.");
     } else {
       _logger.e("Error inesperado: $e");
       throw Exception("Ocurrió un error inesperado. Intenta nuevamente.");

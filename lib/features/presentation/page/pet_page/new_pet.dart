@@ -85,23 +85,33 @@ class _NewPetState extends State<NewPet> {
     final token = loginService.authToken;
     if (token == null) {
       setState(() {
-        _error = 'No se encontro un token válido.';
+        _error = 'No se encontró un token válido.';
       });
       return false;
     }
+
     final decodedToken = JwtDecoder.decode(token);
     final usuarioId = decodedToken['id'];
 
     if (_formKey.currentState?.validate() ?? false) {
       int agePet = int.parse(_ageController.text);
+      String? imageUrl;
+      String? imagePublicId;
 
       try {
         imagesPet.clear();
 
         if (_selectedImage != null) {
-          String? imageUrl = await uploadImageDio(_selectedImage!);
+          imageUrl = await uploadImageDio(_selectedImage!);
           if (imageUrl != null) {
+            imagePublicId = extractPublicIdFromUrl(imageUrl);
             imagesPet.add(imageUrl);
+          } else {
+            setState(() {
+              _error = 'Error al subir la imagen.';
+            });
+            _showSnackBar('Error al subir la imagen.', Colors.red);
+            return false;
           }
         }
 
@@ -119,18 +129,30 @@ class _NewPetState extends State<NewPet> {
           usuarioId,
           imagesPet,
         );
+
         if (success) {
           setState(() {
             _error = 'Mascota registrada con éxito.';
           });
           _showSnackBar('Mascota registrada con éxito.', Colors.green);
           print(_error);
+
           Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted) {
               context.pop();
             }
           });
+
           return true;
+        } else {
+          if (imagePublicId != null) {
+            await deleteImageFromCloudinary(imagePublicId);
+          }
+          setState(() {
+            _error = 'Error al registrar la mascota.';
+          });
+          _showSnackBar('Error al registrar la mascota.', Colors.red);
+          return false;
         }
       } on SocketException catch (_) {
         setState(() {
@@ -141,6 +163,9 @@ class _NewPetState extends State<NewPet> {
         print(_error);
         return false;
       } catch (e) {
+        if (imagePublicId != null) {
+          await deleteImageFromCloudinary(imagePublicId);
+        }
         setState(() {
           _error = 'Error al registrar la mascota: $e';
         });
@@ -149,7 +174,35 @@ class _NewPetState extends State<NewPet> {
         return false;
       }
     }
+
     return false;
+  }
+
+  String extractPublicIdFromUrl(String imageUrl) {
+    final uri = Uri.parse(imageUrl);
+    final pathSegments = uri.pathSegments;
+    if (pathSegments.isNotEmpty) {
+      return pathSegments.last.split('.').first;
+    }
+    return '';
+  }
+
+  Future<void> deleteImageFromCloudinary(String publicId) async {
+    final url = 'https://api.cloudinary.com/v1_1/dvt90q1cu/image/destroy';
+    final response = await Dio().post(
+      url,
+      data: {
+        'public_id': publicId,
+        'api_key': '643382773776643',
+        'api_secret': 'RgipPB2SUXmcxvaJ8DHx-ZNc-fE',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Imagen eliminada de Cloudinary con éxito');
+    } else {
+      print('Error al eliminar la imagen de Cloudinary: ${response.data}');
+    }
   }
 
   void _showSnackBar(String message, Color color) {

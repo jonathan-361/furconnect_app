@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:furconnect/features/presentation/widget/item_pet.dart';
 
 class Search extends StatefulWidget {
   const Search({super.key});
@@ -13,36 +14,41 @@ class _SearchState extends State<Search> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Form(
-          child: ListView(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              SizedBox(height: 10),
+              Row(
                 children: [
-                  SizedBox(
-                    width: 120,
-                    height: 20,
-                    child: TextFormField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        counterText: '',
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 241, 241, 241),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      maxLength: 18,
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.search),
+                          counterText: '',
+                        ),
+                        maxLength: 30,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  SizedBox(width: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 236, 236, 236),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text('Buscar'),
+                    child: Icon(Icons.sort),
                   ),
                 ],
               ),
+              SizedBox(width: 10),
             ],
           ),
         ),

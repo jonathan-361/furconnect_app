@@ -82,10 +82,6 @@ class Profile extends StatelessWidget {
                 child: const Text('FurConnect+'),
               ),
               const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () {},
-                child: const Text('Tienda'),
-              ),
               const SizedBox(height: 32),
               TextButton(
                 onPressed: () {

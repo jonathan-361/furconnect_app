@@ -48,7 +48,7 @@ class _LoginState extends State<Login> {
         }
       } catch (e) {
         setState(() {
-          _message = 'Error: $e';
+          _message = '$e';
           _messageColor = Colors.red;
         });
 

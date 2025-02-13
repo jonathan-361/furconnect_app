@@ -32,7 +32,9 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/petCard',
-      builder: (context, state) => PetCard(),
+      name: 'petCard',
+      builder: (context, state) =>
+          PetCard(petData: state.extra as Map<String, dynamic>),
     ),
     GoRoute(
       path: '/newPet',

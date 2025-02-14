@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io';
 
 import 'package:furconnect/features/data/services/register_service.dart';
@@ -53,6 +54,7 @@ class _RegisterState extends State<Register> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Cuenta creada correctamente')),
           );
+          context.pop();
         }
       } on SocketException catch (_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -246,7 +248,8 @@ class _RegisterState extends State<Register> {
                 ),
                 maxLength: 18,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -274,7 +277,8 @@ class _RegisterState extends State<Register> {
                 ),
                 maxLength: 18,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
                 ],
                 enabled:
                     _isCountrySelected, // Habilitar solo si el país está seleccionado
@@ -303,7 +307,8 @@ class _RegisterState extends State<Register> {
                 ),
                 maxLength: 18,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
                 ],
                 enabled:
                     _isStateSelected, // Habilitar solo si el estado está seleccionado
@@ -316,9 +321,26 @@ class _RegisterState extends State<Register> {
               ),
               const SizedBox(height: 32),
               Center(
-                child: ElevatedButton(
-                  onPressed: _register,
-                  child: const Text('Crear cuenta'),
+                child: SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: _register,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 228, 121, 59),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Crear cuenta',
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

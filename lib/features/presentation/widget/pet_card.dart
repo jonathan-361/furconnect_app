@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:furconnect/features/presentation/page/login_page/login.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -25,9 +24,7 @@ class PetCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            _showPetImage(),
             SizedBox(height: 8),
             Row(
               children: [
@@ -183,29 +180,17 @@ class PetCard extends StatelessWidget {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 211, 194, 40),
-                foregroundColor: Colors.black,
+                backgroundColor: const Color.fromARGB(223, 233, 118, 65),
+                foregroundColor: const Color.fromARGB(255, 255, 255, 255),
               ),
               child: Text("Editar mascota"),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
-                try {
-                  petService.deletePet(petData['_id']).then((_) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Mascota eliminada exitosamente')),
-                    );
-                    context.pop(true);
-                  });
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al eliminar la mascota: $e')),
-                  );
-                }
-              },
+              onPressed: () => _showDeleteConfirmationDialog(
+                  context, petService, petData['_id']),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 177, 24, 24),
+                backgroundColor: const Color.fromARGB(223, 126, 51, 17),
                 foregroundColor: const Color.fromARGB(255, 255, 255, 255),
               ),
               child: Text("Eliminar mascota"),
@@ -220,5 +205,118 @@ class PetCard extends StatelessWidget {
   String _formatWord(String word) {
     if (word.isEmpty) return word;
     return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }
+
+  void _deletePet(
+      BuildContext context, PetService petService, String petId) async {
+    try {
+      await petService.deletePet(petId);
+      _showOverlay(context, Colors.green, 'Mascota eliminada exitosamente');
+      context.pop(true);
+    } catch (e) {
+      _showOverlay(context, Colors.red, 'Error al eliminar la mascota: $e');
+    }
+  }
+
+  void _showDeleteConfirmationDialog(
+      BuildContext context, PetService petService, String petId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        // Se usa un contexto separado para evitar conflictos con el cierre del diálogo.
+        return AlertDialog(
+          title: Text('Confirmar eliminación'),
+          content: Text('¿Estás seguro de que deseas eliminar esta mascota?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Cierra el diálogo
+              },
+            ),
+            TextButton(
+              child: Text('Eliminar'),
+              onPressed: () {
+                Navigator.of(dialogContext)
+                    .pop(); // Cierra el diálogo antes de ejecutar la acción
+                _deletePet(context, petService,
+                    petId); // Llama al método de eliminación
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _showPetImage() {
+    List<String> media = (petData['media'] as List<dynamic>?)
+            ?.map((item) => item.toString().trim())
+            .toList() ??
+        [];
+
+    String imageUrl = media.isNotEmpty
+        ? media.first
+        : 'assets/images/placeholder/pet_placeholder.jpg';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl,
+        width: 200,
+        fit: BoxFit.fitWidth,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/placeholder/pet_placeholder.jpg',
+            width: 200,
+            fit: BoxFit.fitWidth,
+          );
+        },
+      ),
+    );
+  }
+
+  void _showOverlay(BuildContext context, Color color, String message) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.12,
+            left: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    Future.delayed(Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
+    });
   }
 }

@@ -23,6 +23,10 @@ class ItemPet extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(vertical: 1, horizontal: 6),
         title: Row(
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _loadPetImage(),
+            ),
             SizedBox(width: 6),
             Expanded(
               child: Column(
@@ -165,5 +169,32 @@ class ItemPet extends StatelessWidget {
   String _formatWord(String word) {
     if (word.isEmpty) return word;
     return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }
+
+  Widget _loadPetImage() {
+    if (petData['media'] is List && petData['media'].isNotEmpty) {
+      String imageUrl = petData['media'][0].toString().trim();
+      return Image.network(
+        imageUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/placeholder/item_pet_placeholder.jpeg',
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    } else {
+      return Image.asset(
+        'assets/images/placeholder/pet_placeholder.jpg',
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+      );
+    }
   }
 }

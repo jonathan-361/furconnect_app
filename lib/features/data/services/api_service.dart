@@ -1,4 +1,3 @@
-// api_service.dart
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 
@@ -70,11 +69,11 @@ class ApiService {
   void _handleDioError(DioException e) {
     if (e.response?.statusCode == 400) {
       _logger.w("Error de cliente: ${e.response?.data}");
-      throw Exception("Datos incorrectos proporcionados.");
+      throw ("Datos incorrectos proporcionados.");
     }
     if (e.type == DioExceptionType.connectionError) {
       _logger.e("Error de conexión: No se pudo establecer conexión");
-      throw Exception("No se pudo conectar al servidor. Intenta nuevamente.");
+      throw ("No se pudo conectar al servidor. Intenta nuevamente.");
     } else if (e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       _logger.e("Error de tiempo de espera agotado");
@@ -82,7 +81,7 @@ class ApiService {
       throw ("Tiempo de espera agotado. Intenta nuevamente.");
     } else {
       _logger.e("Error inesperado: $e");
-      throw Exception("Ocurrió un error inesperado. Intenta nuevamente.");
+      throw ("Ocurrió un error inesperado. Intenta nuevamente.");
     }
   }
 }

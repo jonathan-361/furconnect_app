@@ -147,6 +147,7 @@ class PetService {
 
       if (response.statusCode == 200) {
         print("Mascota eliminada exitosamente.");
+        return response.data;
       } else {
         throw Exception(
             "Error al eliminar la mascota: ${response.statusMessage}");

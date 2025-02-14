@@ -16,8 +16,8 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final LoginService _loginService;
-  String _message = ''; // Variable para el mensaje
-  Color _messageColor = Colors.transparent; // Color inicial
+  String _message = '';
+  Color _messageColor = Colors.transparent;
 
   @override
   void initState() {
@@ -35,116 +35,202 @@ class _LoginState extends State<Login> {
           _passwordController.text,
         );
         if (token != null) {
-          setState(() {
-            _message = 'Inicio de sesión exitoso';
-            _messageColor = Colors.green;
-          });
-
-          // Esperamos 2 segundos antes de navegar
+          _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
           await Future.delayed(const Duration(seconds: 2));
 
-          // Si el login es exitoso, navegamos al 'navigationBar'
           context.go('/navigationBar');
         }
       } catch (e) {
-        setState(() {
-          _message = '$e';
-          _messageColor = Colors.red;
-        });
-
-        // Esperamos 2 segundos antes de desaparecer el mensaje
+        _showOverlay(context, Colors.red, '$e');
         await Future.delayed(const Duration(seconds: 2));
-        setState(() {
-          _message = ''; // Ocultamos el mensaje después de 2 segundos
-          _messageColor = Colors.transparent;
-        });
       }
     }
+  }
+
+  void _showOverlay(BuildContext context, Color color, String message) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.04,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    // Remover el overlay después de 1.5 segundos
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Iniciar Sesión'),
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          // Mensaje superior que aparece y desaparece
-          AnimatedOpacity(
-            opacity: _messageColor == Colors.transparent ? 0 : 1,
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              color: _messageColor,
-              width: double.infinity,
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _message,
-                style: const TextStyle(color: Colors.white),
-                textAlign: TextAlign.center,
+          Positioned.fill(
+            child: Transform.translate(
+              offset: Offset(-5, -130),
+              child: Transform.scale(
+                scale: 1.05,
+                child: Image.asset(
+                  'assets/images/Login/pet2.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
-          // Formulario de login
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo',
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                      ),
-                      maxLength: 40,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Escribe un correo';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Contraseña',
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                      ),
-                      maxLength: 18,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Escribe una contraseña';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                    Center(
-                      child: Column(
-                        children: [
-                          ElevatedButton(
-                            onPressed: _validateAndLogin,
-                            child: const Text('Iniciar Sesión'),
+          Positioned(
+            top: MediaQuery.of(context).size.height / 5,
+            height: MediaQuery.of(context).size.height / 7.5,
+            width: MediaQuery.of(context).size.width,
+            child: Center(
+              child: Image.asset(
+                'assets/images/logo_furconnect.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2.8,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 255, 255, 255),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+              ),
+              child: SingleChildScrollView(
+                // Envuelves el contenido en un SingleChildScrollView
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 10),
+                        Center(
+                          child: Text(
+                            'Iniciar sesión',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () {
-                              context.push('/register');
-                            },
-                            child: const Text('Crear una cuenta'),
+                        ),
+                        const SizedBox(height: 32),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Correo',
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                            ),
+                            counterText: '',
                           ),
-                        ],
-                      ),
+                          maxLength: 40,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Escribe un correo';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Contraseña',
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                            ),
+                            counterText: '',
+                          ),
+                          maxLength: 18,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Escribe una contraseña';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        Center(
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: ElevatedButton(
+                                  onPressed: _validateAndLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Color.fromARGB(255, 228, 121, 59),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'Iniciar Sesión',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {
+                                  context.push('/register');
+                                },
+                                child: const Text('Crear una cuenta'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

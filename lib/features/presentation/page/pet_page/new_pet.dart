@@ -67,6 +67,7 @@ class _NewPetState extends State<NewPet> {
       final response = await Dio().post(url, data: formData);
       if (response.statusCode == 200) {
         final imageUrl = response.data['secure_url'];
+
         print('URL de la imagen: $imageUrl');
         return imageUrl; // Retorna la URL para usarla en otro lugar
       } else {
@@ -96,7 +97,6 @@ class _NewPetState extends State<NewPet> {
     if (_formKey.currentState?.validate() ?? false) {
       int agePet = int.parse(_ageController.text);
       String? imageUrl;
-      String? imagePublicId;
 
       try {
         imagesPet.clear();
@@ -104,13 +104,13 @@ class _NewPetState extends State<NewPet> {
         if (_selectedImage != null) {
           imageUrl = await uploadImageDio(_selectedImage!);
           if (imageUrl != null) {
-            imagePublicId = extractPublicIdFromUrl(imageUrl);
             imagesPet.add(imageUrl);
           } else {
             setState(() {
               _error = 'Error al subir la imagen.';
             });
-            _showSnackBar('Error al subir la imagen.', Colors.red);
+            _showSnackBar('Error al subir la imagen.',
+                const Color.fromARGB(255, 10, 8, 7));
             return false;
           }
         }
@@ -145,9 +145,6 @@ class _NewPetState extends State<NewPet> {
 
           return true;
         } else {
-          if (imagePublicId != null) {
-            await deleteImageFromCloudinary(imagePublicId);
-          }
           setState(() {
             _error = 'Error al registrar la mascota.';
           });
@@ -163,9 +160,6 @@ class _NewPetState extends State<NewPet> {
         print(_error);
         return false;
       } catch (e) {
-        if (imagePublicId != null) {
-          await deleteImageFromCloudinary(imagePublicId);
-        }
         setState(() {
           _error = 'Error al registrar la mascota: $e';
         });
@@ -176,33 +170,6 @@ class _NewPetState extends State<NewPet> {
     }
 
     return false;
-  }
-
-  String extractPublicIdFromUrl(String imageUrl) {
-    final uri = Uri.parse(imageUrl);
-    final pathSegments = uri.pathSegments;
-    if (pathSegments.isNotEmpty) {
-      return pathSegments.last.split('.').first;
-    }
-    return '';
-  }
-
-  Future<void> deleteImageFromCloudinary(String publicId) async {
-    final url = 'https://api.cloudinary.com/v1_1/dvt90q1cu/image/destroy';
-    final response = await Dio().post(
-      url,
-      data: {
-        'public_id': publicId,
-        'api_key': '643382773776643',
-        'api_secret': 'RgipPB2SUXmcxvaJ8DHx-ZNc-fE',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      print('Imagen eliminada de Cloudinary con éxito');
-    } else {
-      print('Error al eliminar la imagen de Cloudinary: ${response.data}');
-    }
   }
 
   void _showSnackBar(String message, Color color) {
@@ -278,6 +245,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 18,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Por favor ingresa un nombre";
@@ -292,6 +263,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 18,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Por favor ingresa una raza";
@@ -306,6 +281,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 18,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Por favor ingresa un tipo";
@@ -320,6 +299,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Por favor ingresa un color";
@@ -394,6 +377,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Por favor ingresa un temperamento";
@@ -408,6 +395,10 @@ class _NewPetState extends State<NewPet> {
                           counterText: '',
                         ),
                         maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
                         onChanged: (value) {
                           // Asegúrate de que el valor no esté vacío antes de agregarlo
                           if (value.trim().isNotEmpty && value.contains(' ')) {

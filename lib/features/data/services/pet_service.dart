@@ -59,8 +59,8 @@ class PetService {
         } else {
           return response.data;
         }
-      } else if (response.statusCode == 404) {
-        throw Exception("No tienes mascotas todavía");
+      } else if (response.statusCode == 204) {
+        throw ("No tienes mascotas todavía");
       } else {
         throw Exception("Error al obtener las mascotas.");
       }

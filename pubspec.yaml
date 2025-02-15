@@ -53,12 +53,15 @@ flutter:
       fonts:
         - asset: assets/fonts/Nunito-Regular.ttf
         - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
-    - family: Roboto
+          weight: 600
+    - family: RobotoR
       fonts:
-        - asset: assets/fonts/RobotoMono-Regular.ttf
-        - asset: assets/fonts/RobotoMono-Light.ttf
-          weight: 700
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Roboto-SemiBold.ttf
+          weight: 600
+
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf

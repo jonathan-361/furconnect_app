@@ -214,6 +214,8 @@ class _LoginState extends State<Login> {
                                     'Iniciar Sesión',
                                     style: TextStyle(
                                       fontSize: 16,
+                                      fontFamily: 'RobotoR',
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -223,7 +225,13 @@ class _LoginState extends State<Login> {
                                 onPressed: () {
                                   context.push('/register');
                                 },
-                                child: const Text('Crear una cuenta'),
+                                child: const Text(
+                                  'Crear una cuenta',
+                                  style: TextStyle(
+                                    fontFamily: 'RobotoR',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ],
                           ),

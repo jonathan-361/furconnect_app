@@ -16,18 +16,18 @@ class ItemPet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       color: const Color.fromARGB(255, 255, 255, 255),
       elevation: 5,
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(vertical: 1, horizontal: 6),
+        contentPadding: const EdgeInsets.symmetric(vertical: 1, horizontal: 6),
         title: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: _loadPetImage(),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,118 +38,27 @@ class ItemPet extends StatelessWidget {
                         _formatWord(petData['nombre']),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: _getResponsiveFontSize(context, 16),
                           fontFamily: 'Nunito',
                         ),
                       ),
-                      Spacer(),
-                      Wrap(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(70, 201, 134, 60),
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              petData['sexo'].toLowerCase() == "macho"
-                                  ? Icons.male
-                                  : Icons.female,
-                              color: const Color.fromARGB(220, 79, 42, 15),
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Raza:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      Text(
-                        _formatWord(petData['raza']),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
+                      const Spacer(),
+                      Container(
+                        alignment: Alignment.center,
+                        child: Icon(
+                          petData['sexo'].toLowerCase() == "macho"
+                              ? Icons.male
+                              : Icons.female,
+                          color: const Color.fromARGB(220, 79, 42, 15),
+                          size: 22,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Edad:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      Text(
-                        int.tryParse(petData['edad']?.toString() ?? '0')
-                                ?.toString() ??
-                            '0',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Tamaño:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      Text(
-                        _formatWord(petData['tamaño']),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Color:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      Text(
-                        _formatWord(petData['color']),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildInfoRow(context, 'Raza:', petData['raza']),
+                  _buildInfoRow(context, 'Edad:', petData['edad'].toString()),
+                  _buildInfoRow(context, 'Tamaño:', petData['tamaño']),
+                  _buildInfoRow(context, 'Color:', petData['color']),
                 ],
               ),
             ),
@@ -164,6 +73,48 @@ class ItemPet extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: _getResponsiveFontSize(context, 14),
+            fontFamily: 'Inter',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              _formatWord(value),
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: _getResponsiveFontSize(context, 14),
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Inter',
+              ),
+              softWrap: true,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _getResponsiveFontSize(BuildContext context, double baseSize) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 300) {
+      return baseSize * 0.8;
+    } else if (screenWidth < 280) {
+      return baseSize * 0.7;
+    }
+    return baseSize;
   }
 
   String _formatWord(String word) {

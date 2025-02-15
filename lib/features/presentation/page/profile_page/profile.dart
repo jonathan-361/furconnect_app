@@ -57,9 +57,17 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 238, 238, 238),
       appBar: AppBar(
         title: const Text('Perfil'),
+        backgroundColor: const Color.fromARGB(255, 238, 238, 238),
         centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: Color.fromARGB(255, 0, 0, 0),
+          fontSize: 20,
+          fontFamily: 'RobotoR',
+          fontWeight: FontWeight.w600,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -70,72 +78,167 @@ class _ProfileState extends State<Profile> {
                   ? Text(errorMessage)
                   : Column(
                       children: [
-                        Card(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(
-                                  backgroundColor:
-                                      Colors.grey, // Placeholder para la foto
-                                  radius: 40,
-                                ),
-                                const SizedBox(
-                                    width: 16), // Espacio entre imagen y texto
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment
-                                        .start, // Alinear texto a la izquierda
-                                    children: [
-                                      Text(
-                                        'Nombre:',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        _formatWord(userData?['nombre'] ??
-                                            'Nombre no disponible'),
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        'Ciudad:',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        _formatWord(userData?['ciudad'] ??
-                                            'Ciudad no disponible'),
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                    ],
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.91,
+                          child: Card(
+                            color: Colors.white,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                children: [
+                                  const CircleAvatar(
+                                    backgroundColor:
+                                        Colors.grey, // Placeholder para la foto
+                                    radius: 40,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(
+                                      width:
+                                          16), // Espacio entre imagen y texto
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment
+                                          .start, // Alinear texto a la izquierda
+                                      children: [
+                                        Text(
+                                          'Nombre:',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          _formatWord(userData?['nombre'] ??
+                                              'Nombre no disponible'),
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          'Ciudad:',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          _formatWord(userData?['ciudad'] ??
+                                              'Ciudad no disponible'),
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.push('/myPets');
-                          },
-                          child: const Text('Mis mascotas'),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.85,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(8),
+                                      topRight: Radius.circular(8),
+                                      bottomLeft: Radius.zero,
+                                      bottomRight: Radius.zero,
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context.push('/myPets');
+                                },
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.pets, color: Colors.black),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Mis mascotas',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontFamily: 'Nunito',
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      child: Icon(Icons.chevron_right,
+                                          color: Colors.black),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.85,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.zero,
+                                      topRight: Radius.zero,
+                                      bottomLeft: Radius.circular(8),
+                                      bottomRight: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context.push('/furconnectPlus');
+                                },
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.pets, color: Colors.black),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'FurConnect+',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontFamily: 'Nunito',
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      child: Icon(Icons.chevron_right,
+                                          color: Colors.black),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () {},
-                          child: const Text('FurConnect+'),
-                        ),
-                        const SizedBox(height: 8),
                         const SizedBox(height: 32),
                         TextButton(
                           onPressed: () {
@@ -145,7 +248,13 @@ class _ProfileState extends State<Profile> {
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.red,
                           ),
-                          child: const Text('Cerrar Sesión'),
+                          child: const Text(
+                            'Cerrar Sesión',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -19,6 +19,7 @@ class _MyPetsState extends State<MyPets> {
       PetService(ApiService(), LoginService(ApiService()));
   List<dynamic> _pets = [];
   bool isLoading = true;
+  bool hasPets = true;
 
   Future<String?> _getUserId() async {
     try {
@@ -47,13 +48,21 @@ class _MyPetsState extends State<MyPets> {
         final petsData = await _petService.getPetsByOwner(userId);
         setState(() {
           _pets = petsData;
+          hasPets = petsData.isNotEmpty;
           isLoading = false;
         });
       } catch (err) {
-        setState(() {
-          isLoading = false;
-        });
-        print('Error al obtener las mascotas: $err');
+        if (err.toString().contains("No tienes mascotas todavía")) {
+          setState(() {
+            hasPets = false;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          print('Error al obtener las mascotas: $err');
+        }
       }
     } else {
       print('Usuario no autenticado o token inválido');
@@ -69,11 +78,34 @@ class _MyPetsState extends State<MyPets> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 238, 238, 238),
       appBar: AppBar(
         title: Text("Mis Mascotas"),
+        backgroundColor: const Color.fromARGB(255, 238, 238, 238),
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: Color.fromARGB(255, 0, 0, 0),
+          fontSize: 20,
+          fontFamily: 'RobotoR',
+          fontWeight: FontWeight.w600,
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+            size: 30,
+          ),
+          onPressed: () {
+            context.pop();
+          },
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: Icon(
+              Icons.add,
+              color: const Color.fromARGB(255, 158, 89, 9),
+              size: 35,
+            ),
             onPressed: () {
               context.push('/newPet').then((value) {
                 _fetchPets();
@@ -84,18 +116,29 @@ class _MyPetsState extends State<MyPets> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _pets.length,
-              itemBuilder: (context, index) {
-                return ItemPet(
-                  petData: _pets[index],
-                  navigateTo: '/petCard',
-                  onPetDeleted: () {
-                    _fetchPets(); // Recargar la lista de mascotas
+          : hasPets
+              ? ListView.builder(
+                  itemCount: _pets.length,
+                  itemBuilder: (context, index) {
+                    return ItemPet(
+                      petData: _pets[index],
+                      navigateTo: '/petCard',
+                      onPetDeleted: () {
+                        _fetchPets(); // Recargar la lista de mascotas
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                )
+              : Center(
+                  child: Text(
+                    "No tienes mascota aún",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
     );
   }
 }

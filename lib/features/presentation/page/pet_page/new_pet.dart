@@ -187,7 +187,24 @@ class _NewPetState extends State<NewPet> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Agregar mascota"),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: Color.fromARGB(255, 0, 0, 0),
+          fontSize: 20,
+          fontFamily: 'RobotoR',
+          fontWeight: FontWeight.w600,
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+            size: 30,
+          ),
+          onPressed: () {
+            context.pop();
+          },
+        ),
       ),
       body: Stack(
         children: [
@@ -298,10 +315,10 @@ class _NewPetState extends State<NewPet> {
                           labelText: "Color",
                           counterText: '',
                         ),
-                        maxLength: 15,
+                        maxLength: 25,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s,\/]+$')),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -443,7 +460,13 @@ class _NewPetState extends State<NewPet> {
                       Center(
                         child: ElevatedButton(
                           onPressed: _addPet,
-                          child: const Text("Agregar mascota"),
+                          child: const Text(
+                            "Agregar mascota",
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),

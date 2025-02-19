@@ -38,10 +38,10 @@ class _RegisterState extends State<Register> {
 
   void _register() async {
     if (_formKey.currentState?.validate() ?? false) {
-      String fullName = '${nameController.text} ${lastNameController.text}';
       try {
         final success = await _registerService.registerUser(
-          fullName,
+          nameController.text,
+          lastNameController.text,
           emailController.text,
           passwordController.text,
           phoneController.text,
@@ -51,19 +51,13 @@ class _RegisterState extends State<Register> {
         );
 
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cuenta creada correctamente')),
-          );
+          _showOverlay(context, Colors.green, 'Cuenta creada éxitosamente');
           context.pop();
         }
       } on SocketException catch (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay conexión a Internet')),
-        );
+        _showOverlay(context, Colors.red, 'No hay conexión a internet');
       } catch (err) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ocurrió un error desconocido')),
-        );
+        _showOverlay(context, Colors.green, 'Ha ocurrido un error desconocido');
       }
     }
   }
@@ -90,7 +84,8 @@ class _RegisterState extends State<Register> {
                 ),
                 maxLength: 25,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZÀ-ÿ\s]+$')),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -109,7 +104,8 @@ class _RegisterState extends State<Register> {
                 ),
                 maxLength: 25,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZÀ-ÿ\s]+$')),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -181,6 +177,12 @@ class _RegisterState extends State<Register> {
                           .hasMatch(value)) {
                         _passwordError =
                             'No puede contener números consecutivos';
+                      } else if (RegExp(r'^(.)\1*$').hasMatch(value)) {
+                        _passwordError =
+                            'La contraseña no puede tener caracteres repetidos';
+                      } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                        _passwordError =
+                            'Debe incluir al menos una letra mayúscula';
                       } else {
                         _passwordError = null; // Si es válida, no hay error
                       }
@@ -348,5 +350,50 @@ class _RegisterState extends State<Register> {
         ),
       ),
     );
+  }
+
+  void _showOverlay(BuildContext context, Color color, String message) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.04,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
+    });
   }
 }

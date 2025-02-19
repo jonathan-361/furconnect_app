@@ -8,11 +8,20 @@ class RegisterService {
 
   RegisterService(this._apiService);
 
-  Future<bool> registerUser(String nombre, String email, String password,
-      String telefono, String ciudad, String estado, String pais) async {
+  Future<bool> registerUser(
+    String nombre,
+    String apellido,
+    String email,
+    String password,
+    String telefono,
+    String ciudad,
+    String estado,
+    String pais,
+  ) async {
     try {
       final response = await _apiService.post('/users', data: {
         "nombre": nombre,
+        "apellido": apellido,
         "email": email,
         "password": password,
         "telefono": telefono,
@@ -26,7 +35,6 @@ class RegisterService {
         _logger.i('Usuario creado exitosamente');
         return true;
       } else if (response.statusCode == 400 || response.statusCode == 409) {
-        // Suponiendo que la API devuelve un 400 o 409 si el correo ya está en uso
         _logger.w('El correo ya está en uso');
         return false;
       } else {
@@ -35,7 +43,6 @@ class RegisterService {
       }
     } on SocketException catch (e) {
       _logger.e('Error de conexión: $e');
-      // Si ocurre una excepción de tipo SocketException, la red no está disponible
       throw Exception(
           'No se pudo establecer la conexión. Por favor, verifica tu conexión a Internet.');
     } catch (e) {

@@ -35,7 +35,6 @@ class _LoginState extends State<Login> {
         if (token != null) {
           _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
           await Future.delayed(const Duration(seconds: 2));
-
           context.go('/navigationBar');
         }
       } catch (e) {

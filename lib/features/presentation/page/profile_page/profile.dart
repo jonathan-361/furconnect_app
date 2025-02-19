@@ -78,65 +78,39 @@ class _ProfileState extends State<Profile> {
                   ? Text(errorMessage)
                   : Column(
                       children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.91,
-                          child: Card(
-                            color: Colors.white,
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                children: [
-                                  const CircleAvatar(
-                                    backgroundColor:
-                                        Colors.grey, // Placeholder para la foto
-                                    radius: 40,
-                                  ),
-                                  const SizedBox(
-                                      width:
-                                          16), // Espacio entre imagen y texto
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment
-                                          .start, // Alinear texto a la izquierda
-                                      children: [
-                                        Text(
-                                          'Nombre:',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          _formatWord(userData?['nombre'] ??
-                                              'Nombre no disponible'),
-                                          style: TextStyle(fontSize: 18),
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          'Ciudad:',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          _formatWord(userData?['ciudad'] ??
-                                              'Ciudad no disponible'),
-                                          style: TextStyle(fontSize: 18),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        const CircleAvatar(
+                          backgroundColor: Colors.grey,
+                          radius: 60,
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 18),
+                        Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _formatWord(
+                                        '${userData?['nombre'] ?? 'Nombre no disponible'} ${userData?['apellido'] ?? ''}'),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () {
+                                    context.push('/editUser', extra: userData);
+                                  },
+                                  child: Icon(
+                                    Icons.border_color,
+                                    size: 18,
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 35),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -288,6 +262,11 @@ class _ProfileState extends State<Profile> {
 
   String _formatWord(String word) {
     if (word.isEmpty) return word;
-    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+
+    return word
+        .split(' ')
+        .where((e) => e.isNotEmpty)
+        .map((e) => e[0].toUpperCase() + e.substring(1).toLowerCase())
+        .join(' ');
   }
 }

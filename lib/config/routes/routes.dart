@@ -8,6 +8,7 @@ import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
 import 'package:furconnect/features/presentation/widget/pet_card.dart';
 import 'package:furconnect/features/presentation/page/pet_page/new_pet.dart';
 import 'package:furconnect/features/presentation/page/suscription/suscription.dart';
+import 'package:furconnect/features/presentation/page/publications_page/new_publication.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -45,6 +46,10 @@ final router = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => HomePage(),
+    ),
+    GoRoute(
+      path: '/newPublication',
+      builder: (context, state) => NewPublication(),
     ),
   ],
 );

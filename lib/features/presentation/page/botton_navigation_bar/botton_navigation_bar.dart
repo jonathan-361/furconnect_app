@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
-import 'package:furconnect/features/presentation/page/search_page/search.dart';
 import 'package:furconnect/features/presentation/page/chat_page/menu_chat.dart';
 import 'package:furconnect/features/presentation/page/profile_page/profile.dart';
 
@@ -18,7 +17,6 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
 
   List<Widget> _pages = [
     HomePage(),
-    Search(),
     MenuChat(),
     Profile(),
   ];
@@ -38,10 +36,6 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
             label: '',
           ),
           BottomNavigationBarItem(

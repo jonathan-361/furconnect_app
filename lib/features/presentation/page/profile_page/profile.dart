@@ -197,12 +197,7 @@ class _ProfileState extends State<Profile> {
                                   backgroundColor: Colors.white,
                                   foregroundColor: Colors.black,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.zero,
-                                      topRight: Radius.zero,
-                                      bottomLeft: Radius.circular(8),
-                                      bottomRight: Radius.circular(8),
-                                    ),
+                                    borderRadius: BorderRadius.all(Radius.zero),
                                   ),
                                 ),
                                 onPressed: () {
@@ -237,24 +232,52 @@ class _ProfileState extends State<Profile> {
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        TextButton(
-                          onPressed: () {
-                            loginService.logout();
-                            context.go('/login'); // Cerrar sesión
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                          child: const Text(
-                            'Cerrar Sesión',
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(height: 2),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.85,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.zero,
+                                      topRight: Radius.zero,
+                                      bottomLeft: Radius.circular(8),
+                                      bottomRight: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  loginService.logout();
+                                  context.go('/login');
+                                },
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Cerrar sesión',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontFamily: 'Nunito',
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),

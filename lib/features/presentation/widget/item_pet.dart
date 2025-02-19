@@ -141,7 +141,7 @@ class ItemPet extends StatelessWidget {
       );
     } else {
       return Image.asset(
-        'assets/images/placeholder/pet_placeholder.jpg',
+        'assets/images/placeholder/item_pet_placeholder.jpeg',
         width: 120,
         height: 120,
         fit: BoxFit.cover,

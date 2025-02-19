@@ -22,14 +22,12 @@ class _LoginState extends State<Login> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos el servicio de Login
     _loginService = LoginService(ApiService());
   }
 
   void _validateAndLogin() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Intentamos realizar el login
         String? token = await _loginService.login(
           _emailController.text,
           _passwordController.text,
@@ -87,7 +85,6 @@ class _LoginState extends State<Login> {
 
     overlayState.insert(overlayEntry);
 
-    // Remover el overlay después de 1.5 segundos
     Future.delayed(const Duration(milliseconds: 1500), () {
       overlayEntry.remove();
     });
@@ -134,7 +131,6 @@ class _LoginState extends State<Login> {
                 ),
               ),
               child: SingleChildScrollView(
-                // Envuelves el contenido en un SingleChildScrollView
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Form(

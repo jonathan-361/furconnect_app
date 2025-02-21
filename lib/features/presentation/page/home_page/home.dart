@@ -48,8 +48,7 @@ class HomePage extends StatelessWidget {
         title: Row(
           children: [
             GestureDetector(
-              onTap: () => _scaffoldKey.currentState
-                  ?.openDrawer(), // Abre el sidebar desde la izquierda
+              onTap: () => _scaffoldKey.currentState?.openDrawer(),
               child: CircleAvatar(
                 radius: 20,
                 backgroundImage: AssetImage(
@@ -120,13 +119,13 @@ class HomePage extends StatelessWidget {
             children: [
               _buildPetCard(
                 imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Buddy',
-                onTap: () => print('Card 1'),
+                name: 'Cruzar mascota',
+                onTap: () => print('Cruzar mascota'),
               ),
               _buildPetCard(
                 imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Luna',
-                onTap: () => print('Card 2'),
+                name: 'Hacer amigos',
+                onTap: () => print('Hacer amigos'),
               ),
               _buildPetCard(
                 imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
@@ -177,7 +176,9 @@ class HomePage extends StatelessWidget {
               ListTile(
                 leading: Icon(Icons.person),
                 title: Text('Perfil'),
-                onTap: () {},
+                onTap: () {
+                  context.push('/profile');
+                },
               ),
               ListTile(
                 leading: Icon(Icons.settings),

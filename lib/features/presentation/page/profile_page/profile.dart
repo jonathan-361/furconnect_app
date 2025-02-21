@@ -1,36 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
 
-class Profile extends StatefulWidget {
-  const Profile({super.key});
+class Profile extends StatelessWidget {
+  Profile({super.key});
 
-  @override
-  _ProfileState createState() => _ProfileState();
-}
-
-class _ProfileState extends State<Profile> {
   final apiService = ApiService();
   final loginService = LoginService(ApiService());
   final userService = UserService(ApiService(), LoginService(ApiService()));
 
-  Map<String, dynamic>? userData;
-  bool isLoading = true;
-  String errorMessage = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
+  Future<Map<String, dynamic>?> _loadUserData() async {
     try {
-      final loginService = LoginService(ApiService());
       await loginService.loadToken();
       final token = loginService.authToken;
 
@@ -42,231 +26,160 @@ class _ProfileState extends State<Profile> {
       final userId = decodedToken['id'];
 
       final data = await userService.getUserById(userId);
-      setState(() {
-        userData = data;
-        isLoading = false;
-      });
+      return data;
     } catch (err) {
-      setState(() {
-        errorMessage = "Error al cargar los datos del usuario: $err";
-        isLoading = false;
-      });
+      print("Error al cargar los datos del usuario: $err");
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 238, 238, 238),
       appBar: AppBar(
-        title: const Text('Perfil'),
-        backgroundColor: const Color.fromARGB(255, 238, 238, 238),
+        title: Text('Mi perfil'),
         centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: Color.fromARGB(255, 0, 0, 0),
-          fontSize: 20,
-          fontFamily: 'RobotoR',
-          fontWeight: FontWeight.w600,
-        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: isLoading
-              ? const CircularProgressIndicator()
-              : errorMessage.isNotEmpty
-                  ? Text(errorMessage)
-                  : Column(
-                      children: [
-                        const CircleAvatar(
-                          backgroundColor: Colors.grey,
-                          radius: 60,
+        padding: const EdgeInsets.all(24.0),
+        child: FutureBuilder<Map<String, dynamic>?>(
+          future: _loadUserData(), // Llamada a la función asíncrona
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // Mientras se cargan los datos
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              // En caso de error
+              return Center(child: Text('Error al cargar los datos'));
+            } else if (snapshot.hasData) {
+              final userData = snapshot.data;
+              final userName = userData?['nombre'] ?? 'Usuario no encontrado';
+              final userEmail = userData?['email'] ?? 'Correo no disponible';
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color.fromRGBO(0, 0, 0, 0.3),
+                              blurRadius: 2,
+                              spreadRadius: 2,
+                              offset: Offset(1, 1),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 18),
-                        Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _formatWord(
-                                        '${userData?['nombre'] ?? 'Nombre no disponible'} ${userData?['apellido'] ?? ''}'),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 18),
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.push('/editUser', extra: userData);
-                                  },
-                                  child: Icon(
-                                    Icons.border_color,
-                                    size: 18,
-                                  ),
+                        child: CircleAvatar(
+                          radius: 70,
+                          backgroundImage: AssetImage(
+                            'assets/images/placeholder/user_placeholder.jpg',
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            context.push('/editUser', extra: userData);
+                          },
+                          child: Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color.fromRGBO(0, 0, 0, 0.5),
+                                  blurRadius: 2,
+                                  spreadRadius: 1,
+                                  offset: Offset(1, 1),
                                 ),
                               ],
-                            )
-                          ],
+                            ),
+                            child: Icon(
+                              Icons.edit,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 35),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.85,
-                              height: 45,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(8),
-                                      topRight: Radius.circular(8),
-                                      bottomLeft: Radius.zero,
-                                      bottomRight: Radius.zero,
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  context.push('/myPets');
-                                },
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Center(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.pets, color: Colors.black),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Mis mascotas',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontFamily: 'Nunito',
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      child: Icon(Icons.chevron_right,
-                                          color: Colors.black),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.85,
-                              height: 45,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(Radius.zero),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  context.push('/furconnectPlus');
-                                },
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Center(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.pets, color: Colors.black),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'FurConnect+',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontFamily: 'Nunito',
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      child: Icon(Icons.chevron_right,
-                                          color: Colors.black),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.85,
-                              height: 45,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.zero,
-                                      topRight: Radius.zero,
-                                      bottomLeft: Radius.circular(8),
-                                      bottomRight: Radius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  loginService.logout();
-                                  context.go('/login');
-                                },
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Center(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Cerrar sesión',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontFamily: 'Nunito',
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    userName,
+                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    userEmail,
+                    style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                  ),
+                  SizedBox(height: 20),
+                  Card(
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Consigue FurConnect+',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            '¡Descubre más posibles parejas para tu mascota!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                context.push('/furconnectPlus');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFC48253),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'Consigue FurConnect+',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return Center(child: Text('No se encontraron datos'));
+            }
+          },
         ),
       ),
     );
-  }
-
-  String _formatWord(String word) {
-    if (word.isEmpty) return word;
-
-    return word
-        .split(' ')
-        .where((e) => e.isNotEmpty)
-        .map((e) => e[0].toUpperCase() + e.substring(1).toLowerCase())
-        .join(' ');
   }
 }

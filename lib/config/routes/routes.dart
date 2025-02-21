@@ -9,6 +9,7 @@ import 'package:furconnect/features/presentation/widget/pet_card.dart';
 import 'package:furconnect/features/presentation/page/pet_page/new_pet.dart';
 import 'package:furconnect/features/presentation/page/suscription/suscription.dart';
 import 'package:furconnect/features/presentation/page/user_page/edit_user.dart';
+import 'package:furconnect/features/presentation/page/match_page/match.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -50,6 +51,10 @@ final router = GoRouter(
     GoRoute(
       path: '/editUser',
       builder: (context, state) => EditUser(),
-    )
+    ),
+    GoRoute(
+      path: '/match',
+      builder: (context, state) => MatchPage(),
+    ),
   ],
 );

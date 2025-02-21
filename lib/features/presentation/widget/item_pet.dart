@@ -17,17 +17,20 @@ class ItemPet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      color: const Color.fromARGB(255, 255, 255, 255),
-      elevation: 5,
+      color: Colors.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 1, horizontal: 6),
+        contentPadding: const EdgeInsets.all(10),
         title: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: _loadPetImage(),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,23 +41,29 @@ class ItemPet extends StatelessWidget {
                         _formatWord(petData['nombre']),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: _getResponsiveFontSize(context, 16),
+                          fontSize: _getResponsiveFontSize(context, 18),
                           fontFamily: 'Nunito',
+                          color: Colors.brown.shade700,
                         ),
                       ),
                       const Spacer(),
                       Container(
-                        alignment: Alignment.center,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.brown.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: Icon(
                           petData['sexo'].toLowerCase() == "macho"
                               ? Icons.male
                               : Icons.female,
-                          color: const Color.fromARGB(220, 79, 42, 15),
-                          size: 22,
+                          color: Colors.brown.shade800,
+                          size: 24,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
                   _buildInfoRow(context, 'Raza:', petData['raza']),
                   _buildInfoRow(context, 'Edad:', petData['edad'].toString()),
                   _buildInfoRow(context, 'Tamaño:', petData['tamaño']),
@@ -76,34 +85,38 @@ class ItemPet extends StatelessWidget {
   }
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: _getResponsiveFontSize(context, 14),
-            fontFamily: 'Inter',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              _formatWord(value),
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: _getResponsiveFontSize(context, 14),
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Inter',
-              ),
-              softWrap: true,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: _getResponsiveFontSize(context, 14),
+              fontFamily: 'Inter',
+              color: Colors.brown.shade600,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                _formatWord(value),
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: _getResponsiveFontSize(context, 14),
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter',
+                  color: Colors.brown.shade900,
+                ),
+                softWrap: true,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -127,14 +140,14 @@ class ItemPet extends StatelessWidget {
       String imageUrl = petData['media'][0].toString().trim();
       return Image.network(
         imageUrl,
-        width: 120,
-        height: 120,
+        width: 100,
+        height: 100,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Image.asset(
             'assets/images/placeholder/item_pet_placeholder.jpeg',
-            width: 120,
-            height: 120,
+            width: 100,
+            height: 100,
             fit: BoxFit.cover,
           );
         },
@@ -142,8 +155,8 @@ class ItemPet extends StatelessWidget {
     } else {
       return Image.asset(
         'assets/images/placeholder/item_pet_placeholder.jpeg',
-        width: 120,
-        height: 120,
+        width: 100,
+        height: 100,
         fit: BoxFit.cover,
       );
     }

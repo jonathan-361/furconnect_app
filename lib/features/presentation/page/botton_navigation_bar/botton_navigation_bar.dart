@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/chat_page/menu_chat.dart';
-import 'package:furconnect/features/presentation/page/profile_page/profile.dart';
+import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
+import 'package:furconnect/features/presentation/page/match_page/match.dart'; // Importar MatchPage
 
 class BottonNavigationBarPage extends StatefulWidget {
   const BottonNavigationBarPage({super.key});
@@ -15,10 +16,11 @@ class BottonNavigationBarPage extends StatefulWidget {
 class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
   int _actualPage = 0;
 
-  List<Widget> _pages = [
+  final List<Widget> _pages = [
     HomePage(),
+    MatchPage(), // Agregado MatchPage
+    MyPets(),
     MenuChat(),
-    Profile(),
   ];
 
   @override
@@ -27,24 +29,38 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
       body: _pages[_actualPage],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _actualPage = index;
-          });
-        },
         currentIndex: _actualPage,
-        items: [
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          if (index == 4) {
+            context.push('/furconnectPlus'); // Navega a la pantalla de suscripción
+          } else {
+            setState(() {
+              _actualPage = index;
+            });
+          }
+        },
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: '',
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border), // Ícono de Match
+            label: 'Match',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pets),
+            label: 'Mascotas',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
-            label: '',
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: '',
+            icon: Icon(Icons.add_circle),
+            label: 'Plus',
           ),
         ],
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -32,9 +31,7 @@ class _MyPetsState extends State<MyPets> {
       }
 
       final decodedToken = JwtDecoder.decode(token);
-      final userId = decodedToken['id'];
-
-      return userId;
+      return decodedToken['id'];
     } catch (e) {
       print('Error al decodificar el token: $e');
       return null;
@@ -52,17 +49,11 @@ class _MyPetsState extends State<MyPets> {
           isLoading = false;
         });
       } catch (err) {
-        if (err.toString().contains("No tienes mascotas todavía")) {
-          setState(() {
-            hasPets = false;
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          print('Error al obtener las mascotas: $err');
-        }
+        setState(() {
+          hasPets = err.toString().contains("No tienes mascotas todavía") ? false : hasPets;
+          isLoading = false;
+        });
+        print('Error al obtener las mascotas: $err');
       }
     } else {
       print('Usuario no autenticado o token inválido');
@@ -78,67 +69,83 @@ class _MyPetsState extends State<MyPets> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 238, 238, 238),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Mis Mascotas"),
-        backgroundColor: const Color.fromARGB(255, 238, 238, 238),
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: Color.fromARGB(255, 0, 0, 0),
-          fontSize: 20,
-          fontFamily: 'RobotoR',
-          fontWeight: FontWeight.w600,
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 30,
-          ),
-          onPressed: () {
-            context.pop();
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.add,
-              color: const Color.fromARGB(255, 158, 89, 9),
-              size: 35,
+        automaticallyImplyLeading: true,
+        backgroundColor: Color(0xFF894936),
+        elevation: 0,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Mascotas",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
-            onPressed: () {
-              context.push('/newPet').then((value) {
-                _fetchPets();
-              });
-            },
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : hasPets
+                    ? ListView.builder(
+                        itemCount: _pets.length,
+                        itemBuilder: (context, index) {
+                          return ItemPet(
+                            petData: _pets[index],
+                            navigateTo: '/petCard',
+                            onPetDeleted: () {
+                              _fetchPets();
+                            },
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Text(
+                          "No tienes mascota aún",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: SizedBox(
+              width: 180, // Botón más pequeño
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/newPet').then((value) {
+                    _fetchPets();
+                  });
+                },
+                icon: Icon(Icons.add, size: 20, color: Color.fromARGB(255, 235, 234, 232)), // Icono más pequeño y color acorde
+                label: Text(
+                  "Agregar",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 236, 236, 236), // Texto color claro
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFC48253), // Fondo botón
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : hasPets
-              ? ListView.builder(
-                  itemCount: _pets.length,
-                  itemBuilder: (context, index) {
-                    return ItemPet(
-                      petData: _pets[index],
-                      navigateTo: '/petCard',
-                      onPetDeleted: () {
-                        _fetchPets(); // Recargar la lista de mascotas
-                      },
-                    );
-                  },
-                )
-              : Center(
-                  child: Text(
-                    "No tienes mascota aún",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
     );
   }
 }

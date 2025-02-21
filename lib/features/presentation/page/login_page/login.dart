@@ -32,12 +32,10 @@ class _LoginState extends State<Login> {
           _emailController.text,
           _passwordController.text,
         );
-        if (token != null) {
-          _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
-          await Future.delayed(const Duration(seconds: 2));
-          context.go('/navigationBar');
-        }
-      } catch (e) {
+        _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
+        await Future.delayed(const Duration(seconds: 2));
+        context.go('/navigationBar');
+            } catch (e) {
         _showOverlay(context, Colors.red, '$e');
         await Future.delayed(const Duration(seconds: 2));
       }

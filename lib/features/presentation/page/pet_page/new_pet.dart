@@ -69,7 +69,7 @@ class _NewPetState extends State<NewPet> {
         final imageUrl = response.data['secure_url'];
 
         print('URL de la imagen: $imageUrl');
-        return imageUrl; // Retorna la URL para usarla en otro lugar
+        return imageUrl;
       } else {
         print('Error al subir la imagen: ${response.statusMessage}');
         return null;

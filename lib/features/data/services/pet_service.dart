@@ -128,6 +128,62 @@ class PetService {
     }
   }
 
+  Future<bool> updatePet(
+    String petId,
+    String nombre,
+    String raza,
+    String tipo,
+    String color,
+    String tamano,
+    int edad,
+    String sexo,
+    bool pedigree,
+    List<String> vacunas,
+    String temperamento,
+    String usuarioId,
+    List<String> media,
+  ) async {
+    await _loginService.loadToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    final token = _loginService.authToken;
+
+    try {
+      final response = await _apiService.put(
+        '/pets/$petId',
+        data: {
+          "nombre": nombre,
+          "raza": raza,
+          "tipo": tipo,
+          "color": color,
+          "tamaño": tamano.toLowerCase(),
+          "edad": edad,
+          "sexo": sexo.toLowerCase(),
+          "pedigree": pedigree,
+          "vacunas": vacunas,
+          "temperamento": temperamento,
+          "media": media,
+        },
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Mascota actualizada exitosamente.");
+        return true;
+      } else {
+        throw Exception(
+            "Error al actualizar la mascota: ${response.statusMessage}");
+      }
+    } on DioException catch (e) {
+      throw Exception("Error en la solicitud: ${e.message}");
+    }
+  }
+
   Future<void> deletePet(String petId) async {
     await _loginService.loadToken();
 
@@ -157,4 +213,3 @@ class PetService {
     }
   }
 }
-

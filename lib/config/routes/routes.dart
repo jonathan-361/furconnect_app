@@ -7,6 +7,7 @@ import 'package:furconnect/features/presentation/page/botton_navigation_bar/bott
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
 import 'package:furconnect/features/presentation/widget/pet_card.dart';
 import 'package:furconnect/features/presentation/page/pet_page/new_pet.dart';
+import 'package:furconnect/features/presentation/page/pet_page/edit_pet.dart';
 import 'package:furconnect/features/presentation/page/suscription/suscription.dart';
 import 'package:furconnect/features/presentation/page/user_page/edit_user.dart';
 import 'package:furconnect/features/presentation/page/match_page/match.dart';
@@ -40,6 +41,10 @@ final router = GoRouter(
     GoRoute(
       path: '/newPet',
       builder: (context, state) => NewPet(),
+    ),
+    GoRoute(
+      path: '/editPet',
+      builder: (context, state) => EditPet(),
     ),
     GoRoute(
       path: '/furconnectPlus',

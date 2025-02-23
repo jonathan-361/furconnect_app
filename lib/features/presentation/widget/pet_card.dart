@@ -84,7 +84,10 @@ class PetCard extends StatelessWidget {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            context.push('/editPet', extra: petData);
+            print(petData['imagen']);
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFFC48253),
             shape:

@@ -49,6 +49,21 @@ class ApiService {
     throw Exception("Error en la solicitud POST");
   }
 
+  Future<Response> put(String endpoint,
+      {Map<String, dynamic>? data, Map<String, dynamic>? headers}) async {
+    try {
+      return await _dio.post(
+        endpoint,
+        data: data,
+        options: Options(headers: headers),
+      );
+    } on DioException catch (e) {
+      _handleDioError(e);
+    }
+
+    throw Exception("Error en la solicitud PUT");
+  }
+
   Future<Response> delete(String endpoint,
       {Map<String, dynamic>? queryParams,
       Map<String, dynamic>? headers}) async {

@@ -10,13 +10,11 @@ class PetService {
   PetService(this._apiService, this._loginService);
 
   Future<Map<String, dynamic>?> getPetById(String petId) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.get(
@@ -37,13 +35,11 @@ class PetService {
   }
 
   Future<List<dynamic>> getPetsByOwner(String ownerId) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.get(
@@ -74,6 +70,7 @@ class PetService {
   }
 
   Future<bool> addPet(
+    String imagen,
     String nombre,
     String raza,
     String tipo,
@@ -87,17 +84,17 @@ class PetService {
     String usuarioId,
     List<String> media,
   ) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.post(
-        '/newpet',
+        '/pets',
         data: {
+          "imagen": imagen,
           "nombre": nombre,
           "raza": raza,
           "tipo": tipo,
@@ -143,13 +140,11 @@ class PetService {
     String usuarioId,
     List<String> media,
   ) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.put(
@@ -185,13 +180,11 @@ class PetService {
   }
 
   Future<void> deletePet(String petId) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.delete(

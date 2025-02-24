@@ -137,7 +137,7 @@ class ItemPet extends StatelessWidget {
 
   Widget _loadPetImage() {
     if (petData['media'] is List && petData['media'].isNotEmpty) {
-      String imageUrl = petData['media'][0].toString().trim();
+      String imageUrl = petData['imagen'].toString().trim();
       return Image.network(
         imageUrl,
         width: 100,
@@ -145,7 +145,7 @@ class ItemPet extends StatelessWidget {
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Image.asset(
-            'assets/images/placeholder/item_pet_placeholder.jpeg',
+            'assets/images/placeholder/item_pet_placeholder.jpg',
             width: 100,
             height: 100,
             fit: BoxFit.cover,
@@ -154,7 +154,7 @@ class ItemPet extends StatelessWidget {
       );
     } else {
       return Image.asset(
-        'assets/images/placeholder/item_pet_placeholder.jpeg',
+        'assets/images/placeholder/item_pet_placeholder.jpg',
         width: 100,
         height: 100,
         fit: BoxFit.cover,

@@ -35,7 +35,7 @@ class _LoginState extends State<Login> {
         _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
         await Future.delayed(const Duration(seconds: 2));
         context.go('/navigationBar');
-            } catch (e) {
+      } catch (e) {
         _showOverlay(context, Colors.red, '$e');
         await Future.delayed(const Duration(seconds: 2));
       }
@@ -98,7 +98,7 @@ class _LoginState extends State<Login> {
               child: Transform.scale(
                 scale: 1.05,
                 child: Image.asset(
-                  'assets/images/Login/pet2.jpg',
+                  'assets/images/Login/login_asset.jpg',
                   fit: BoxFit.cover,
                 ),
               ),

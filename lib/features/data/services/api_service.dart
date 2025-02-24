@@ -10,8 +10,8 @@ class ApiService {
           BaseOptions(
             baseUrl: "https://furconnect.onrender.com/api/",
             // baseUrl: "https://furconnect-api-copy-v2.onrender.com/api/",
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
+            connectTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 60),
             headers: {
               'Accept': 'application/json',
             },

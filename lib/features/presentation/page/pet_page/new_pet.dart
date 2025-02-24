@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:dio/dio.dart';
+import 'package:image/image.dart' as img;
 import 'dart:io';
 
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -29,12 +31,13 @@ class _NewPetState extends State<NewPet> {
   final _ageController = TextEditingController();
   final _temperamentController = TextEditingController();
   final _vacuumController = TextEditingController();
+  final PageController _pageController = PageController();
 
   bool _hasPedigree = false;
   String? selectedSize;
   String? selectedGender;
   List<String> vaccines = [];
-  File? _selectedImage;
+  List<File> _selectedImages = [];
   bool _imageError = false;
   String? _error;
   List<String> imagesPet = [];
@@ -42,42 +45,83 @@ class _NewPetState extends State<NewPet> {
   final List<String> sizes = ['Pequeño', 'Mediano', 'Grande'];
   final List<String> genders = ['Macho', 'Hembra'];
 
-  Future<void> _pickFile() async {
+  Future<void> _pickFiles() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
+      allowMultiple: true,
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (result != null) {
+      List<File> compressedImages = [];
+      for (var file in result.files) {
+        Uint8List compressedImageBytes = await _compressImage(File(file.path!));
+        // Guardar los bytes comprimidos en un archivo temporal
+        final tempFile = File(
+            '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await tempFile.writeAsBytes(compressedImageBytes);
+        compressedImages.add(tempFile);
+      }
+
       setState(() {
-        _selectedImage = File(result.files.single.path!);
+        _selectedImages = compressedImages.take(4).toList();
         _imageError = false;
       });
-      print('Imagen seleccionada: ${_selectedImage!.path}');
+      print('Imágenes seleccionadas y comprimidas: ${_selectedImages.length}');
     }
   }
 
-  Future<String?> uploadImageDio(File imageFile) async {
-    try {
-      final url = 'https://api.cloudinary.com/v1_1/dvt90q1cu/upload';
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(imageFile.path),
-        'upload_preset': 'upload_image_flutter'
-      });
+  Future<Uint8List> _compressImage(File imageFile) async {
+    final image = img.decodeImage(await imageFile.readAsBytes())!;
+    final resizedImage =
+        img.copyResize(image, width: 800); // Redimensionar la imagen
+    final compressedImageBytes =
+        img.encodeJpg(resizedImage, quality: 85); // Comprimir la imagen
 
-      final response = await Dio().post(url, data: formData);
-      if (response.statusCode == 200) {
-        final imageUrl = response.data['secure_url'];
-
-        print('URL de la imagen: $imageUrl');
-        return imageUrl;
-      } else {
-        print('Error al subir la imagen: ${response.statusMessage}');
-        return null;
-      }
-    } catch (e) {
-      print('Excepción al subir imagen: $e');
-      return null;
+    if (compressedImageBytes.length > 400 * 1024) {
+      return _compressImageWithLowerQuality(
+          image); // Comprimir más si es necesario
     }
+
+    return compressedImageBytes;
+  }
+
+  Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
+    final resizedImage = img.copyResize(image, width: 600); // Redimensionar más
+    final compressedImageBytes =
+        img.encodeJpg(resizedImage, quality: 70); // Comprimir más
+    return compressedImageBytes;
+  }
+
+  Future<List<String>> uploadImagesDio(List<File> images) async {
+    List<String> uploadedUrls = [];
+
+    for (File image in images) {
+      try {
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromBytes(
+            await image.readAsBytes(),
+            filename: 'image.jpg',
+          ),
+          'upload_preset': 'upload_image_flutter',
+        });
+
+        final response = await Dio().post(
+          'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
+          data: formData,
+        );
+
+        if (response.statusCode == 200) {
+          final imageUrl = response.data['secure_url'];
+          uploadedUrls.add(imageUrl);
+          print('URL de la imagen: $imageUrl');
+        } else {
+          print('Error al subir imagen: ${response.statusMessage}');
+        }
+      } catch (e) {
+        print('Excepción al subir imagen: $e');
+      }
+    }
+    return uploadedUrls;
   }
 
   Future<bool> _addPet() async {
@@ -96,26 +140,28 @@ class _NewPetState extends State<NewPet> {
 
     if (_formKey.currentState?.validate() ?? false) {
       int agePet = int.parse(_ageController.text);
-      String? imageUrl;
 
       try {
-        imagesPet.clear();
+        if (_selectedImages.isNotEmpty) {
+          List<String> uploadedUrls = await uploadImagesDio(_selectedImages);
 
-        if (_selectedImage != null) {
-          imageUrl = await uploadImageDio(_selectedImage!);
-          if (imageUrl != null) {
-            imagesPet.add(imageUrl);
+          if (uploadedUrls.isNotEmpty) {
+            imagesPet = uploadedUrls;
           } else {
             setState(() {
-              _error = 'Error al subir la imagen.';
+              _error = 'Error al subir imágenes.';
             });
-            _showSnackBar('Error al subir la imagen.',
-                const Color.fromARGB(255, 10, 8, 7));
+            _showOverlay(context, Colors.red, 'Error al subir imágenes');
             return false;
           }
         }
 
+        String mainImage = imagesPet.isNotEmpty ? imagesPet.first : "";
+        List<String> mediaImages =
+            imagesPet.length > 1 ? imagesPet.sublist(1) : [];
+
         final success = await _petService.addPet(
+          mainImage,
           _nameController.text,
           _breedController.text,
           _typeController.text,
@@ -127,14 +173,11 @@ class _NewPetState extends State<NewPet> {
           vaccines,
           _temperamentController.text,
           usuarioId,
-          imagesPet,
+          mediaImages,
         );
 
         if (success) {
-          setState(() {
-            _error = 'Mascota registrada con éxito.';
-          });
-          _showSnackBar('Mascota registrada con éxito.', Colors.green);
+          _showOverlay(context, Colors.green, 'Mascota registrada con éxito.');
           print(_error);
 
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -142,28 +185,27 @@ class _NewPetState extends State<NewPet> {
               context.pop();
             }
           });
-
           return true;
         } else {
           setState(() {
             _error = 'Error al registrar la mascota.';
           });
-          _showSnackBar('Error al registrar la mascota.', Colors.red);
+          _showOverlay(context, Colors.red, 'Error al registrar la mascota.');
           return false;
         }
       } on SocketException catch (_) {
         setState(() {
           _error = 'Error de conexión. Verifica tu conexión a internet.';
         });
-        _showSnackBar(
-            'Error de conexión. Verifica tu conexión a internet.', Colors.red);
+        _showOverlay(context, Colors.red,
+            'Error de conexión. Verifica tu conexión a internet');
         print(_error);
         return false;
       } catch (e) {
         setState(() {
           _error = 'Error al registrar la mascota: $e';
         });
-        _showSnackBar('Error al registrar la mascota: $e', Colors.red);
+        _showOverlay(context, Colors.red, 'Error al registrar la mascota: $e');
         print(_error);
         return false;
       }
@@ -172,14 +214,49 @@ class _NewPetState extends State<NewPet> {
     return false;
   }
 
-  void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: Duration(seconds: 3),
+  void _showOverlay(BuildContext context, Color color, String message) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.04,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
+
+    overlayState.insert(overlayEntry);
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
+    });
   }
 
   @override
@@ -218,42 +295,84 @@ class _NewPetState extends State<NewPet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: _pickFile,
-                        child: Container(
-                          width: double.infinity,
-                          height: _selectedImage != null ? null : 200,
-                          constraints: _selectedImage != null
-                              ? const BoxConstraints(maxHeight: 400)
-                              : null,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
-                            image: _selectedImage != null
-                                ? DecorationImage(
-                                    image: FileImage(_selectedImage!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
-                          ),
-                          child: _selectedImage == null
-                              ? const Center(
-                                  child: Icon(
-                                    Icons.add_a_photo,
-                                    size: 50,
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              : null,
+                        onTap: _pickFiles,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: _selectedImages.isNotEmpty ? 250 : 200,
+                              constraints: _selectedImages.isNotEmpty
+                                  ? const BoxConstraints(maxHeight: 400)
+                                  : null,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: _selectedImages.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Stack(
+                                        alignment: Alignment.bottomCenter,
+                                        children: [
+                                          PageView.builder(
+                                            controller: _pageController,
+                                            itemCount: _selectedImages.length,
+                                            itemBuilder: (context, index) {
+                                              return Image.file(
+                                                _selectedImages[index],
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                              );
+                                            },
+                                          ),
+                                          Positioned(
+                                            bottom: 8,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: const Color.fromRGBO(
+                                                    0, 0, 0, 0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: SmoothPageIndicator(
+                                                controller: _pageController,
+                                                count: _selectedImages.length,
+                                                effect: WormEffect(
+                                                  dotHeight: 8,
+                                                  dotWidth: 8,
+                                                  activeDotColor: Colors.blue,
+                                                  dotColor: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.add_a_photo,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                            ),
+                            if (_imageError)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Text(
+                                  "Por favor selecciona una imagen",
+                                  style: TextStyle(
+                                      color: Colors.red, fontSize: 12),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (_imageError) // Muestra el error si no se ha seleccionado imagen
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Text(
-                            "Por favor selecciona una imagen",
-                            style: TextStyle(color: Colors.red, fontSize: 12),
-                          ),
-                        ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _nameController,

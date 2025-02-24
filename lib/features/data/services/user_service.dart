@@ -8,13 +8,11 @@ class UserService {
   UserService(this._apiService, this._loginService);
 
   Future<Map<String, dynamic>?> getUserById(String userId) async {
-    await _loginService.loadToken();
+    final token = await _loginService.getToken();
 
     if (!_loginService.isAuthenticated()) {
       throw Exception("No se encuentra autenticado. Inicie sesión.");
     }
-
-    final token = _loginService.authToken;
 
     try {
       final response = await _apiService.get(

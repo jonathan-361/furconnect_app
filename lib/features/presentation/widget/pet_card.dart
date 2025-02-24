@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'package:dio/dio.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
@@ -20,7 +24,7 @@ class PetCard extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Color(0xFF894936),
         title: Text(
-          petData['nombre'],
+          _formatWord(petData['nombre']),
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         iconTheme: IconThemeData(color: Colors.white),
@@ -31,7 +35,7 @@ class PetCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _showPetImage(),
+              _showPetImages(),
               SizedBox(height: 16),
               _infoCard(),
               SizedBox(height: 16),
@@ -40,6 +44,65 @@ class PetCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _showPetImages() {
+    List<String> images = [];
+
+    if (petData['imagen'] != null && petData['imagen'].isNotEmpty) {
+      images.add(petData['imagen']);
+    }
+
+    if (petData['media'] != null && petData['media'].isNotEmpty) {
+      images.addAll(List<String>.from(petData['media']));
+    }
+
+    if (images.isEmpty) {
+      images.add('assets/images/placeholder/item_pet_placeholder.jpg');
+    }
+
+    final PageController controller = PageController();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 200,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  images[index],
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/placeholder/item_pet_placeholder.jpg',
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        SmoothPageIndicator(
+          controller: controller,
+          count: images.length,
+          effect: ExpandingDotsEffect(
+            activeDotColor: Color(0xFFC48253),
+            dotHeight: 8,
+            dotWidth: 8,
+          ),
+        ),
+      ],
     );
   }
 
@@ -52,13 +115,29 @@ class PetCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoRow(Icons.pets, "Tipo", petData['tipo']),
-            _infoRow(Icons.category, "Raza", petData['raza']),
+            _infoRow(
+              Icons.pets,
+              "Tipo",
+              _formatWord(petData['tipo']),
+            ),
+            _infoRow(
+              Icons.category,
+              "Raza",
+              _formatWord(petData['raza']),
+            ),
             _infoRow(Icons.cake, "Edad", "${petData['edad']} años"),
-            _infoRow(Icons.color_lens, "Color", petData['color']),
+            _infoRow(
+              Icons.color_lens,
+              "Color",
+              _formatWord(petData['color']),
+            ),
             _infoRow(Icons.check_circle, "Pedigree",
                 petData['pedigree'] ? "Sí" : "No"),
-            _infoRow(Icons.height, "Tamaño", petData['tamaño']),
+            _infoRow(
+              Icons.height,
+              "Tamaño",
+              _formatWord(petData['tamaño']),
+            ),
           ],
         ),
       ),
@@ -111,30 +190,6 @@ class PetCard extends StatelessWidget {
     );
   }
 
-  Widget _showPetImage() {
-    String imageUrl = petData['media'].isNotEmpty
-        ? petData['media'].first
-        : 'assets/images/placeholder/pet_placeholder.jpg';
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        imageUrl,
-        width: double.infinity,
-        height: 200,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/images/placeholder/pet_placeholder.jpg',
-            width: double.infinity,
-            height: 200,
-            fit: BoxFit.cover,
-          );
-        },
-      ),
-    );
-  }
-
   void _showDeleteConfirmationDialog(
       BuildContext context, PetService petService, String petId) {
     showDialog(
@@ -163,20 +218,128 @@ class PetCard extends StatelessWidget {
 
   void _deletePet(
       BuildContext context, PetService petService, String petId) async {
+    final dio = Dio();
+
     try {
+      final String? mainImageUrl = petData['imagen'];
+      print(mainImageUrl);
+      final List<String> mediaImageUrls =
+          List<String>.from(petData['media'] ?? []);
+      print(mediaImageUrls);
+
+      Future<void> deleteImageFromCloudinary(String imageUrl) async {
+        final publicId = _extractPublicIdFromUrl(imageUrl);
+        if (publicId != null) {
+          await dio.delete(
+            'https://api.cloudinary.com/v1_1/dvt90q1cu/image/destroy',
+            queryParameters: {
+              'public_id': publicId,
+              'api_key': '643382773776643',
+              'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+              'signature': _generateSignature(publicId),
+            },
+          );
+        }
+      }
+
+      if (mainImageUrl != null && mainImageUrl.isNotEmpty) {
+        await deleteImageFromCloudinary(mainImageUrl);
+      }
+
+      for (final imageUrl in mediaImageUrls) {
+        if (imageUrl.isNotEmpty) {
+          await deleteImageFromCloudinary(imageUrl);
+        }
+      }
+
       await petService.deletePet(petId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Mascota eliminada exitosamente'),
-            backgroundColor: Colors.green),
-      );
+
+      _showOverlay(context, Colors.green, 'Mascota eliminada exitosamente');
       context.pop(true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Error al eliminar la mascota: $e'),
-            backgroundColor: Colors.red),
-      );
+      _showOverlay(context, Colors.red,
+          'Error al eliminar la mascota, intente nuevamente');
     }
+  }
+
+  String? _extractPublicIdFromUrl(String imageUrl) {
+    final uri = Uri.parse(imageUrl);
+    final segments = uri.pathSegments;
+
+    if (segments.length >= 4) {
+      print(segments);
+      return segments.last.split('.').first;
+    }
+    return null;
+  }
+
+  String _generateSignature(String publicId) {
+    final String apiSecret = 'RgipPB2SUXmcxvaJ8DHx-ZNc-fE';
+
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final Map<String, String> params = {
+      'public_id': publicId,
+      'timestamp': timestamp,
+    };
+
+    final sortedParams = params.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final String paramString =
+        sortedParams.map((entry) => '${entry.key}=${entry.value}').join('&');
+    final String signatureBase = '$paramString$apiSecret';
+    final bytes = utf8.encode(signatureBase);
+    final digest = sha1.convert(bytes);
+
+    return digest.toString();
+  }
+
+  void _showOverlay(BuildContext context, Color color, String message) {
+    OverlayState overlayState = Overlay.of(context);
+    OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.04,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
+    });
+  }
+
+  String _formatWord(String word) {
+    if (word.isEmpty) return word;
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
   }
 }

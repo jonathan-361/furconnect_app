@@ -26,6 +26,7 @@ dependencies:
   jwt_decoder: ^2.0.1
   cupertino_icons: ^1.0.8
   flutter_dotenv: ^5.2.1
+  smooth_page_indicator: ^1.2.1
 
 
 dev_dependencies:
@@ -44,9 +45,9 @@ flutter:
     - assets/images/logo_furconnect.png
     - assets/images/background_login_copy.png
     - assets/images/placeholder/pet_placeholder.jpg
-    - assets/images/placeholder/item_pet_placeholder.jpeg
+    - assets/images/placeholder/item_pet_placeholder.jpg
     - assets/images/placeholder/user_placeholder.jpg
-    - assets/images/Login/pet1.jpg
+    - assets/images/Login/login_asset.jpg
     - assets/images/Login/pet2.jpg
 
   fonts:

@@ -89,6 +89,7 @@ class ItemPet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
@@ -136,7 +137,7 @@ class ItemPet extends StatelessWidget {
   }
 
   Widget _loadPetImage() {
-    if (petData['media'] is List && petData['media'].isNotEmpty) {
+    if (petData['media'] is List && petData['imagen'].isNotEmpty) {
       String imageUrl = petData['imagen'].toString().trim();
       return Image.network(
         imageUrl,

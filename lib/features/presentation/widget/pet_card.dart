@@ -116,11 +116,6 @@ class PetCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _infoRow(
-              Icons.pets,
-              "Tipo",
-              _formatWord(petData['tipo']),
-            ),
-            _infoRow(
               Icons.category,
               "Raza",
               _formatWord(petData['raza']),
@@ -137,6 +132,11 @@ class PetCard extends StatelessWidget {
               Icons.height,
               "Tamaño",
               _formatWord(petData['tamaño']),
+            ),
+            _infoRow(
+              Icons.flash_on,
+              "Tipo",
+              _formatWord(petData['temperamento']),
             ),
           ],
         ),

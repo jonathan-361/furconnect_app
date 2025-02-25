@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
+import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
 
 class NewPet extends StatefulWidget {
   const NewPet({super.key});
@@ -26,16 +27,15 @@ class _NewPetState extends State<NewPet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
-  final _typeController = TextEditingController();
   final _colorController = TextEditingController();
   final _ageController = TextEditingController();
-  final _temperamentController = TextEditingController();
   final _vacuumController = TextEditingController();
   final PageController _pageController = PageController();
 
   bool _hasPedigree = false;
   String? selectedSize;
   String? selectedGender;
+  String? selectedTemperament;
   List<String> vaccines = [];
   List<File> _selectedImages = [];
   bool _imageError = false;
@@ -55,7 +55,6 @@ class _NewPetState extends State<NewPet> {
       List<File> compressedImages = [];
       for (var file in result.files) {
         Uint8List compressedImageBytes = await _compressImage(File(file.path!));
-        // Guardar los bytes comprimidos en un archivo temporal
         final tempFile = File(
             '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
         await tempFile.writeAsBytes(compressedImageBytes);
@@ -72,23 +71,19 @@ class _NewPetState extends State<NewPet> {
 
   Future<Uint8List> _compressImage(File imageFile) async {
     final image = img.decodeImage(await imageFile.readAsBytes())!;
-    final resizedImage =
-        img.copyResize(image, width: 800); // Redimensionar la imagen
-    final compressedImageBytes =
-        img.encodeJpg(resizedImage, quality: 85); // Comprimir la imagen
+    final resizedImage = img.copyResize(image, width: 800);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
 
     if (compressedImageBytes.length > 400 * 1024) {
-      return _compressImageWithLowerQuality(
-          image); // Comprimir más si es necesario
+      return _compressImageWithLowerQuality(image);
     }
 
     return compressedImageBytes;
   }
 
   Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
-    final resizedImage = img.copyResize(image, width: 600); // Redimensionar más
-    final compressedImageBytes =
-        img.encodeJpg(resizedImage, quality: 70); // Comprimir más
+    final resizedImage = img.copyResize(image, width: 600);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
     return compressedImageBytes;
   }
 
@@ -173,14 +168,14 @@ class _NewPetState extends State<NewPet> {
           mainImage,
           _nameController.text,
           _breedController.text,
-          _typeController.text,
+          'Perro',
           _colorController.text,
           selectedSize ?? 'Tamaño desconocido',
           agePet,
           selectedGender ?? 'No definido aún',
           _hasPedigree,
           vaccines,
-          _temperamentController.text,
+          selectedTemperament ?? 'Temperamento desconocido',
           usuarioId,
           mediaImages,
         );
@@ -420,24 +415,6 @@ class _NewPetState extends State<NewPet> {
                         },
                       ),
                       TextFormField(
-                        controller: _typeController,
-                        decoration: const InputDecoration(
-                          labelText: "Tipo",
-                          counterText: '',
-                        ),
-                        maxLength: 18,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor ingresa un tipo";
-                          }
-                          return null;
-                        },
-                      ),
-                      TextFormField(
                         controller: _colorController,
                         decoration: const InputDecoration(
                           labelText: "Color",
@@ -515,20 +492,24 @@ class _NewPetState extends State<NewPet> {
                           return null;
                         },
                       ),
-                      TextFormField(
-                        controller: _temperamentController,
-                        decoration: const InputDecoration(
-                          labelText: "Temperamento",
-                          counterText: '',
-                        ),
-                        maxLength: 15,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
-                        ],
+                      DropdownButtonFormField<String>(
+                        value: selectedTemperament,
+                        decoration:
+                            const InputDecoration(labelText: 'Temperamento'),
+                        items: temperaments.map((String temperament) {
+                          return DropdownMenuItem<String>(
+                            value: temperament,
+                            child: Text(temperament),
+                          );
+                        }).toList(),
+                        onChanged: (String? newTemperament) {
+                          setState(() {
+                            selectedTemperament = newTemperament;
+                          });
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Por favor ingresa un temperamento";
+                            return "Por favor selecciona el temperamento";
                           }
                           return null;
                         },

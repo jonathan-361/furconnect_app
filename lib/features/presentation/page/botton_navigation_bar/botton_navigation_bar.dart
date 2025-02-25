@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/chat_page/menu_chat.dart';
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
-import 'package:furconnect/features/presentation/page/match_page/match.dart'; // Importar MatchPage
+import 'package:furconnect/features/presentation/page/match_page/match.dart';
+import 'package:furconnect/features/presentation/widget/pet_card_home.dart';
 
 class BottonNavigationBarPage extends StatefulWidget {
   const BottonNavigationBarPage({super.key});
@@ -18,7 +19,7 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
 
   final List<Widget> _pages = [
     HomePage(),
-    MatchPage(), // Agregado MatchPage
+    PetCardHome(),
     MyPets(),
     MenuChat(),
   ];
@@ -34,7 +35,8 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           if (index == 4) {
-            context.push('/furconnectPlus'); // Navega a la pantalla de suscripción
+            context
+                .push('/furconnectPlus'); // Navega a la pantalla de suscripción
           } else {
             setState(() {
               _actualPage = index;

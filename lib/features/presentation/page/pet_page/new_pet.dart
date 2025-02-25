@@ -139,6 +139,15 @@ class _NewPetState extends State<NewPet> {
     final usuarioId = decodedToken['id'];
 
     if (_formKey.currentState?.validate() ?? false) {
+      if (_selectedImages.isEmpty) {
+        setState(() {
+          _imageError = true;
+        });
+        _showOverlay(
+            context, Colors.red, 'Debe seleccionar al menos una imagen.');
+        return false;
+      }
+
       int agePet = int.parse(_ageController.text);
 
       try {

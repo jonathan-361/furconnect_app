@@ -67,7 +67,7 @@ class PetCard extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          height: 200,
+          height: 250,
           child: PageView.builder(
             controller: controller,
             itemCount: images.length,
@@ -76,8 +76,8 @@ class PetCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
                   images[index],
-                  width: double.infinity,
-                  height: 200,
+                  width: 200,
+                  height: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Image.asset(

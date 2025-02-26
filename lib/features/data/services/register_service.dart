@@ -9,6 +9,7 @@ class RegisterService {
   RegisterService(this._apiService);
 
   Future<bool> registerUser(
+    String imagen,
     String nombre,
     String apellido,
     String email,
@@ -20,6 +21,7 @@ class RegisterService {
   ) async {
     try {
       final response = await _apiService.post('/users', data: {
+        "imagen": imagen,
         "nombre": nombre,
         "apellido": apellido,
         "email": email,

@@ -118,8 +118,6 @@ class EditPet extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Cargar imagen
-                      // Cargar imagen
                       const SizedBox(height: 10),
                       if (imagesPet.isNotEmpty)
                         Center(
@@ -150,7 +148,6 @@ class EditPet extends StatelessWidget {
                             ),
                           ),
                         ),
-
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _nameController,

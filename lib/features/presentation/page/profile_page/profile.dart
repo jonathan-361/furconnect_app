@@ -89,7 +89,7 @@ class Profile extends StatelessWidget {
                         right: 0,
                         child: GestureDetector(
                           onTap: () {
-                            context.push('/editUser', extra: userData);
+                            //context.push('/editUser', extra: userData);
                           },
                           child: Container(
                             width: 35,

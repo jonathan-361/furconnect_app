@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
+import 'package:image/image.dart' as img;
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 import 'package:furconnect/features/data/services/register_service.dart';
@@ -31,30 +34,115 @@ class _RegisterState extends State<Register> {
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _imageError;
 
   bool _isCountrySelected = false;
   bool _isStateSelected = false;
 
+  File? _selectedImage;
+
   final RegisterService _registerService = RegisterService(ApiService());
 
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      final file = File(result.files.single.path!);
+
+      setState(() {
+        _selectedImage = file;
+        _imageError = null;
+      });
+    }
+  }
+
+  Future<Uint8List> _compressImage(File imageFile) async {
+    final image = img.decodeImage(await imageFile.readAsBytes())!;
+    final resizedImage = img.copyResize(image, width: 800);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
+
+    if (compressedImageBytes.length > 400 * 1024) {
+      return _compressImageWithLowerQuality(image);
+    }
+
+    return compressedImageBytes;
+  }
+
+  Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
+    final resizedImage = img.copyResize(image, width: 600);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
+    return compressedImageBytes;
+  }
+
+  Future<String?> uploadImageDio(File image) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromBytes(
+          await image.readAsBytes(),
+          filename: 'image.jpg',
+        ),
+        'upload_preset': 'upload_image_flutter',
+      });
+
+      final response = await Dio().post(
+        'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final imageUrl = response.data['secure_url'];
+        print('Imagen subida con éxito: $imageUrl');
+        return imageUrl;
+      } else {
+        print('Error al subir la imagen: ${response.statusMessage}');
+        return null;
+      }
+    } catch (e) {
+      print('Excepción al subir imagen: $e');
+      return null;
+    }
+  }
+
   void _register() async {
+    setState(() {
+      _imageError =
+          _selectedImage == null ? 'Debe seleccionar una imagen' : null;
+    });
+
+    if (_selectedImage == null) return;
+
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        final success = await _registerService.registerUser(
-          nameController.text,
-          lastNameController.text,
-          emailController.text,
-          passwordController.text,
-          phoneController.text,
-          cityController.text,
-          stateController.text,
-          countryController.text,
-        );
+        Uint8List compressedImage = await _compressImage(_selectedImage!);
+        File compressedFile = File('${_selectedImage!.path}_compressed.jpg');
+        await compressedFile.writeAsBytes(compressedImage);
 
-        if (success) {
+        String? imageUrl = await uploadImageDio(compressedFile);
+
+        if (imageUrl != null) {
+          final success = await _registerService.registerUser(
+            imageUrl,
+            nameController.text,
+            lastNameController.text,
+            emailController.text,
+            passwordController.text,
+            phoneController.text,
+            cityController.text,
+            stateController.text,
+            countryController.text,
+          );
+
+          if (success) {
+            AppOverlay.showOverlay(
+                context, Colors.green, "Cuenta creada éxitosamente");
+            context.pop();
+          }
+        } else {
           AppOverlay.showOverlay(
-              context, Colors.green, "Cuenta creada éxitosamente");
-          context.pop();
+              context, Colors.red, "Error al subir la imagen");
         }
       } on SocketException catch (_) {
         AppOverlay.showOverlay(
@@ -79,6 +167,42 @@ class _RegisterState extends State<Register> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: _selectedImage != null ? null : 250,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _selectedImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            _selectedImage!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.add_a_photo,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
+                ),
+              ),
+              if (_imageError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _imageError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(

@@ -40,28 +40,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
             SizedBox(width: 10),
-            /*
-            Expanded(
-              child: TextField(
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Buscar...',
-                  hintStyle: TextStyle(
-                    color: Colors.white,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.white,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                ),
-              ),
-            ),
-            */
           ],
         ),
       ),
@@ -160,7 +138,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            Color.fromRGBO(0, 0, 0, 0.3),
+                            Color.fromRGBO(0, 0, 0, 0.2),
                           ],
                           stops: [0.8, 1.0],
                           begin: Alignment.centerLeft,
@@ -227,9 +205,12 @@ class __HomePageBodyState extends State<_HomePageBody> {
                     if (index < pets.length) {
                       final petData = pets[index];
                       return _buildPetCard(
-                        imageUrl: petData['imagen'],
+                        imageUrl: petData['media']?.isNotEmpty ?? false
+                            ? petData['media'][0]
+                            : null,
                         name: petData['nombre'],
-                        onTap: () => print('Card tapped: ${petData['nombre']}'),
+                        onTap: () =>
+                            context.pushNamed('petCardHome', extra: petData),
                       );
                     } else {
                       return Center(
@@ -286,6 +267,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
                         imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
+                          print('Imagen no válida');
                           return Image.asset(
                             'assets/images/placeholder/pet_placeholder.jpg',
                             fit: BoxFit.cover,

@@ -57,7 +57,11 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/petCardHome',
-      builder: (context, state) => PetCardHome(),
+      name: 'petCardHome',
+      builder: (context, state) {
+        final petData = state.extra as Map<String, dynamic>;
+        return PetCardHome(petData: petData);
+      },
     ),
     GoRoute(
       path: '/profile',

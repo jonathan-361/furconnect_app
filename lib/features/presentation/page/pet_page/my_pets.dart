@@ -120,7 +120,7 @@ class _MyPetsState extends State<MyPets> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: SizedBox(
-              width: 180, // Botón más pequeño
+              width: 180,
               child: ElevatedButton.icon(
                 onPressed: () {
                   context.push('/newPet').then((value) {
@@ -128,20 +128,17 @@ class _MyPetsState extends State<MyPets> {
                   });
                 },
                 icon: Icon(Icons.add,
-                    size: 20,
-                    color: Color.fromARGB(255, 235, 234,
-                        232)), // Icono más pequeño y color acorde
+                    size: 20, color: Color.fromARGB(255, 235, 234, 232)),
                 label: Text(
                   "Agregar",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color:
-                        Color.fromARGB(255, 236, 236, 236), // Texto color claro
+                    color: Color.fromARGB(255, 236, 236, 236),
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFC48253), // Fondo botón
+                  backgroundColor: Color(0xFFC48253),
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),

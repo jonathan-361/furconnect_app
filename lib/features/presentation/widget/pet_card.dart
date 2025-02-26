@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
+import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class PetCard extends StatelessWidget {
   final Map<String, dynamic> petData;
@@ -258,12 +259,12 @@ class PetCard extends StatelessWidget {
       }
 
       await petService.deletePet(petId);
-
-      _showOverlay(context, Colors.green, 'Mascota eliminada exitosamente');
+      AppOverlay.showOverlay(
+          context, Colors.green, "Mascota eliminada éxitosamente");
       context.pop(true);
     } catch (e) {
-      _showOverlay(context, Colors.red,
-          'Error al eliminar la mascota, intente nuevamente');
+      AppOverlay.showOverlay(context, Colors.red,
+          "Error al eliminar la mascota, intente nuevamente");
     }
   }
 
@@ -296,51 +297,6 @@ class PetCard extends StatelessWidget {
     final digest = sha1.convert(bytes);
 
     return digest.toString();
-  }
-
-  void _showOverlay(BuildContext context, Color color, String message) {
-    OverlayState overlayState = Overlay.of(context);
-    OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.04,
-            left: 20,
-            right: 20,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  message,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlayState.insert(overlayEntry);
-
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      overlayEntry.remove();
-    });
   }
 
   String _formatWord(String word) {

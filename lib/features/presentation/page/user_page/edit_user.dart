@@ -70,7 +70,9 @@ class _EditUserState extends State<EditUser> {
                   ),
                   maxLength: 25,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$'),
+                    ),
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -89,7 +91,9 @@ class _EditUserState extends State<EditUser> {
                   ),
                   maxLength: 25,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$'),
+                    ),
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -111,7 +115,7 @@ class _EditUserState extends State<EditUser> {
                   onChanged: (value) {
                     setState(() {
                       final regex = RegExp(
-                          r"^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com|hotmail\.com)$");
+                          r"^[a-zA-Z0-9._%+-ñÑ]+@(gmail\.com|outlook\.com|hotmail\.com)$");
                       if (value.isEmpty) {
                         _emailError = 'El correo es obligatorio';
                       } else if (!regex.hasMatch(value)) {
@@ -126,7 +130,7 @@ class _EditUserState extends State<EditUser> {
                       return 'El correo es obligatorio';
                     }
                     final regex = RegExp(
-                        r"^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com|hotmail\.com)$");
+                        r"^[a-zA-Z0-ñÑ9._%+-]+@(gmail\.com|outlook\.com|hotmail\.com)$");
                     if (!regex.hasMatch(value)) {
                       return 'Por favor ingresa un correo válido';
                     }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -16,8 +18,7 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final LoginService _loginService;
-  String _message = '';
-  Color _messageColor = Colors.transparent;
+  bool _obscureText = true;
 
   @override
   void initState() {
@@ -32,59 +33,15 @@ class _LoginState extends State<Login> {
           _emailController.text,
           _passwordController.text,
         );
-        _showOverlay(context, Colors.green, 'Inicio de sesión exitoso');
+        AppOverlay.showOverlay(
+            context, Colors.green, "Inicio de sesión éxitoso");
         await Future.delayed(const Duration(seconds: 2));
         context.go('/navigationBar');
       } catch (e) {
-        _showOverlay(context, Colors.red, '$e');
+        AppOverlay.showOverlay(context, Colors.red, "$e");
         await Future.delayed(const Duration(seconds: 2));
       }
     }
-  }
-
-  void _showOverlay(BuildContext context, Color color, String message) {
-    OverlayState overlayState = Overlay.of(context);
-    OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.04,
-            left: 20,
-            right: 20,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  message,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlayState.insert(overlayEntry);
-
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      overlayEntry.remove();
-    });
   }
 
   @override
@@ -168,14 +125,29 @@ class _LoginState extends State<Login> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
+                          obscureText: _obscureText,
+                          decoration: InputDecoration(
                             labelText: 'Contraseña',
                             border: OutlineInputBorder(
                               borderRadius:
                                   BorderRadius.all(Radius.circular(10)),
                             ),
                             counterText: '',
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 15),
+                            suffix: IconButton(
+                              icon: Icon(
+                                _obscureText
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                size: 22,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureText = !_obscureText;
+                                });
+                              },
+                            ),
                           ),
                           maxLength: 18,
                           validator: (value) {

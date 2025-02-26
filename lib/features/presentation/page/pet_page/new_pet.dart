@@ -12,6 +12,7 @@ import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
+import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class NewPet extends StatefulWidget {
   const NewPet({super.key});
@@ -138,8 +139,8 @@ class _NewPetState extends State<NewPet> {
         setState(() {
           _imageError = true;
         });
-        _showOverlay(
-            context, Colors.red, 'Debe seleccionar al menos una imagen.');
+        AppOverlay.showOverlay(
+            context, Colors.red, "Debe seleccionar al menos una imagen.");
         return false;
       }
 
@@ -155,7 +156,8 @@ class _NewPetState extends State<NewPet> {
             setState(() {
               _error = 'Error al subir imágenes.';
             });
-            _showOverlay(context, Colors.red, 'Error al subir imágenes');
+            AppOverlay.showOverlay(
+                context, Colors.red, "Error al subir imágenes");
             return false;
           }
         }
@@ -181,7 +183,8 @@ class _NewPetState extends State<NewPet> {
         );
 
         if (success) {
-          _showOverlay(context, Colors.green, 'Mascota registrada con éxito.');
+          AppOverlay.showOverlay(
+              context, Colors.green, "Mascota registrada con éxito");
           print(_error);
 
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -194,73 +197,30 @@ class _NewPetState extends State<NewPet> {
           setState(() {
             _error = 'Error al registrar la mascota.';
           });
-          _showOverlay(context, Colors.red, 'Error al registrar la mascota.');
+          AppOverlay.showOverlay(
+              context, Colors.red, "Error al registrar la mascota");
           return false;
         }
       } on SocketException catch (_) {
         setState(() {
           _error = 'Error de conexión. Verifica tu conexión a internet.';
         });
-        _showOverlay(context, Colors.red,
-            'Error de conexión. Verifica tu conexión a internet');
+        AppOverlay.showOverlay(
+            context, Colors.red, "Verifica tu conexión a internet.");
         print(_error);
         return false;
       } catch (e) {
         setState(() {
           _error = 'Error al registrar la mascota: $e';
         });
-        _showOverlay(context, Colors.red, 'Error al registrar la mascota: $e');
+        AppOverlay.showOverlay(
+            context, Colors.red, "Error al registrar la mascota: $e");
         print(_error);
         return false;
       }
     }
 
     return false;
-  }
-
-  void _showOverlay(BuildContext context, Color color, String message) {
-    OverlayState overlayState = Overlay.of(context);
-    OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.04,
-            left: 20,
-            right: 20,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  message,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlayState.insert(overlayEntry);
-
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      overlayEntry.remove();
-    });
   }
 
   @override
@@ -387,7 +347,7 @@ class _NewPetState extends State<NewPet> {
                         maxLength: 18,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -405,7 +365,7 @@ class _NewPetState extends State<NewPet> {
                         maxLength: 18,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -423,7 +383,7 @@ class _NewPetState extends State<NewPet> {
                         maxLength: 25,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s,\/]+$')),
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -523,10 +483,9 @@ class _NewPetState extends State<NewPet> {
                         maxLength: 15,
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
                         ],
                         onChanged: (value) {
-                          // Asegúrate de que el valor no esté vacío antes de agregarlo
                           if (value.trim().isNotEmpty && value.contains(' ')) {
                             setState(() {
                               vaccines.add(value.trim());

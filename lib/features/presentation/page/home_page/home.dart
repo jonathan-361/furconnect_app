@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
+import 'package:furconnect/features/data/services/pet_service.dart';
+import 'package:furconnect/features/presentation/page/home_page/side_bar.dart';
+import 'package:furconnect/features/presentation/widget/overlay.dart';
 
+// ignore: must_be_immutable
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
@@ -14,30 +17,11 @@ class HomePage extends StatelessWidget {
   final apiService = ApiService();
   final loginService = LoginService(ApiService());
   final userService = UserService(ApiService(), LoginService(ApiService()));
+  final petService = PetService(ApiService(), LoginService(ApiService()));
 
   Map<String, dynamic>? userData;
   bool isLoading = true;
   String errorMessage = '';
-
-  Future<Map<String, dynamic>?> _loadUserData() async {
-    try {
-      await loginService.loadToken();
-      final token = loginService.authToken;
-
-      if (token == null) {
-        return null;
-      }
-
-      final decodedToken = JwtDecoder.decode(token);
-      final userId = decodedToken['id'];
-
-      final data = await userService.getUserById(userId);
-      return data;
-    } catch (err) {
-      print("Error al cargar los datos del usuario: $err");
-      return null;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +40,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             SizedBox(width: 10),
+            /*
             Expanded(
               child: TextField(
                 style: TextStyle(
@@ -76,134 +61,207 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
+            */
           ],
         ),
       ),
-      drawer: _buildSidebar(context),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 8.0,
-              children: [
-                FilterChip(
-                  label: Text('Macho'),
-                  onSelected: (bool value) {},
-                ),
-                FilterChip(
-                  label: Text('Pug'),
-                  onSelected: (bool value) {},
-                ),
-                FilterChip(
-                  label: Text('Otros'),
-                  onSelected: (bool value) {},
-                ),
-                ActionChip(
-                  avatar: Icon(Icons.filter_list),
-                  label: Text('Filtros'),
-                  onPressed: () => _showFilterModal(context),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-              child: GridView(
-            padding: EdgeInsets.all(8.0),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.8,
-            ),
-            children: [
-              _buildPetCard(
-                imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Cruzar mascota',
-                onTap: () => print('Cruzar mascota'),
-              ),
-              _buildPetCard(
-                imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Hacer amigos',
-                onTap: () => print('Hacer amigos'),
-              ),
-              _buildPetCard(
-                imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Max',
-                onTap: () => print('Card 3'),
-              ),
-              _buildPetCard(
-                imagePath: 'assets/images/placeholder/pet_placeholder.jpg',
-                name: 'Bella',
-                onTap: () => print('Card 4'),
-              ),
-            ],
-          )),
-        ],
-      ),
+      drawer: SideBar(),
+      body: _HomePageBody(petService: petService),
     );
   }
+}
 
-  Widget _buildSidebar(BuildContext context) {
-    return Drawer(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: FutureBuilder<Map<String, dynamic>?>(
-        future: _loadUserData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
+class _HomePageBody extends StatefulWidget {
+  final PetService petService;
 
-          final userData = snapshot.data;
-          final userName =
-              _formatWord(userData?['nombre'] ?? 'Nombre no disponible');
-          final userEmail =
-              _formatWord(userData?['email'] ?? 'example@gmail.com');
+  const _HomePageBody({required this.petService});
 
-          return Column(
-            children: [
-              UserAccountsDrawerHeader(
-                accountName: Text(userName,
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                accountEmail: Text(userEmail),
-                currentAccountPicture: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: AssetImage(
-                      'assets/images/placeholder/user_placeholder.jpg'),
+  @override
+  __HomePageBodyState createState() => __HomePageBodyState();
+}
+
+class __HomePageBodyState extends State<_HomePageBody> {
+  final ScrollController _scrollController = ScrollController();
+
+  List<dynamic> pets = [];
+  int currentPage = 1;
+  bool isLoading = false;
+  bool hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPets();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _loadPets() async {
+    if (isLoading || !hasMore) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final newPets = await widget.petService.getPets(currentPage, 10);
+      setState(() {
+        pets.addAll(newPets);
+        isLoading = false;
+        if (newPets.length < 10) {
+          hasMore = false;
+        } else {
+          currentPage++;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al registrar la mascota: $e");
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      _loadPets();
+    }
+  }
+
+  Future<void> _refreshPets() async {
+    setState(() {
+      pets.clear();
+      currentPage = 1;
+      hasMore = true;
+    });
+    _loadPets();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Color.fromRGBO(0, 0, 0, 0.3),
+                          ],
+                          stops: [0.8, 1.0],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Wrap(
+                          spacing: 8.0,
+                          children: [
+                            FilterChip(
+                              label: Text('Macho'),
+                              onSelected: (bool value) {},
+                            ),
+                            FilterChip(
+                              label: Text('Hembra'),
+                              onSelected: (bool value) {},
+                            ),
+                            FilterChip(
+                              label: Text('Pug'),
+                              onSelected: (bool value) {},
+                            ),
+                            FilterChip(
+                              label: Text('Dalmata'),
+                              onSelected: (bool value) {},
+                            ),
+                            FilterChip(
+                              label: Text('Husky'),
+                              onSelected: (bool value) {},
+                            ),
+                            FilterChip(
+                              label: Text('Chihuahua'),
+                              onSelected: (bool value) {},
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ActionChip(
+                    avatar: Icon(Icons.filter_list),
+                    label: Text('Filtros'),
+                    onPressed: () => _showFilterModal(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshPets,
+                child: GridView.builder(
+                  controller: _scrollController,
+                  padding: EdgeInsets.all(8.0),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: pets.length + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index < pets.length) {
+                      final petData = pets[index];
+                      return _buildPetCard(
+                        imagePath:
+                            'assets/images/placeholder/pet_placeholder.jpg',
+                        name: petData['nombre'],
+                        onTap: () => print('Card tapped: ${petData['nombre']}'),
+                      );
+                    } else {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ),
-              ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Perfil'),
-                onTap: () {
-                  context.push('/profile');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.settings),
-                title: Text('Configuración'),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.favorite),
-                title: Text('Favoritos'),
-                onTap: () {},
-              ),
-              Spacer(),
-              ListTile(
-                leading: Icon(Icons.exit_to_app, color: Colors.red),
-                title: Text('Cerrar sesión',
-                    style: TextStyle(color: const Color(0xFFF44336))),
-                onTap: () {
-                  loginService.logout();
-                  context.go('/login');
-                },
-              ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        ),
+        Positioned(
+          bottom: 20,
+          right: 20,
+          child: FloatingActionButton(
+            onPressed: () {
+              _scrollController.animateTo(
+                0.0,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.easeOut,
+              );
+            },
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: Icon(Icons.arrow_upward, color: Colors.white),
+          ),
+        ),
+      ],
     );
   }
 
@@ -264,11 +322,6 @@ class HomePage extends StatelessWidget {
                 value: false,
                 onChanged: (value) {},
               ),
-              CheckboxListTile(
-                title: Text('Disponibles para adopción'),
-                value: false,
-                onChanged: (value) {},
-              ),
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -279,15 +332,5 @@ class HomePage extends StatelessWidget {
         );
       },
     );
-  }
-
-  String _formatWord(String word) {
-    if (word.isEmpty) return word;
-
-    return word
-        .split(' ')
-        .where((e) => e.isNotEmpty)
-        .map((e) => e[0].toUpperCase() + e.substring(1).toLowerCase())
-        .join(' ');
   }
 }

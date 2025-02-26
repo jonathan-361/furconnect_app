@@ -9,6 +9,45 @@ class PetService {
 
   PetService(this._apiService, this._loginService);
 
+  Future<List<dynamic>> getPets(int page, int limit) async {
+    final token = await _loginService.getToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    try {
+      final response = await _apiService.get(
+        '/pets',
+        queryParams: {'page': page, 'limit': limit},
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data is Map<String, dynamic> &&
+            response.data['pets'] != null) {
+          return List.from(response.data['pets']);
+        } else if (response.data is List<dynamic>) {
+          return response.data;
+        } else {
+          throw Exception("La respuesta no contiene una lista de mascotas.");
+        }
+      } else if (response.statusCode == 204) {
+        throw ("No tienes mascotas todavía");
+      } else {
+        throw Exception("Error al obtener las mascotas.");
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception("No tienes mascotas todavía");
+      } else {
+        throw Exception("Error en la solicitud: ${e.message}");
+      }
+    }
+  }
+
   Future<Map<String, dynamic>?> getPetById(String petId) async {
     final token = await _loginService.getToken();
 

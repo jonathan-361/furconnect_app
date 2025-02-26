@@ -50,7 +50,9 @@ class _MyPetsState extends State<MyPets> {
         });
       } catch (err) {
         setState(() {
-          hasPets = err.toString().contains("No tienes mascotas todavía") ? false : hasPets;
+          hasPets = err.toString().contains("No tienes mascotas todavía")
+              ? false
+              : hasPets;
           isLoading = false;
         });
         print('Error al obtener las mascotas: $err');
@@ -125,13 +127,17 @@ class _MyPetsState extends State<MyPets> {
                     _fetchPets();
                   });
                 },
-                icon: Icon(Icons.add, size: 20, color: Color.fromARGB(255, 235, 234, 232)), // Icono más pequeño y color acorde
+                icon: Icon(Icons.add,
+                    size: 20,
+                    color: Color.fromARGB(255, 235, 234,
+                        232)), // Icono más pequeño y color acorde
                 label: Text(
                   "Agregar",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 236, 236, 236), // Texto color claro
+                    color:
+                        Color.fromARGB(255, 236, 236, 236), // Texto color claro
                   ),
                 ),
                 style: ElevatedButton.styleFrom(

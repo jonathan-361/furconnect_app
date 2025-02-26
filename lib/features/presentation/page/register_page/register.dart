@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:furconnect/features/data/services/register_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
+import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class Register extends StatefulWidget {
   Register({super.key});
@@ -51,13 +52,16 @@ class _RegisterState extends State<Register> {
         );
 
         if (success) {
-          _showOverlay(context, Colors.green, 'Cuenta creada éxitosamente');
+          AppOverlay.showOverlay(
+              context, Colors.green, "Cuenta creada éxitosamente");
           context.pop();
         }
       } on SocketException catch (_) {
-        _showOverlay(context, Colors.red, 'No hay conexión a internet');
+        AppOverlay.showOverlay(
+            context, Colors.red, "No hay conexión a internet");
       } catch (err) {
-        _showOverlay(context, Colors.green, 'Ha ocurrido un error desconocido');
+        AppOverlay.showOverlay(
+            context, Colors.red, "Ha ocurrido un error desconocido");
       }
     }
   }
@@ -350,50 +354,5 @@ class _RegisterState extends State<Register> {
         ),
       ),
     );
-  }
-
-  void _showOverlay(BuildContext context, Color color, String message) {
-    OverlayState overlayState = Overlay.of(context);
-    OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.04,
-            left: 20,
-            right: 20,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  message,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlayState.insert(overlayEntry);
-
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      overlayEntry.remove();
-    });
   }
 }

@@ -5,7 +5,6 @@ class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color.fromARGB(223, 165, 68, 22),
     ).copyWith(
-      // Modificar colores específicos aquí
       primary: Color.fromARGB(223, 165, 68, 22),
       secondary: const Color.fromARGB(255, 228, 121, 59),
       surface: Colors.white,

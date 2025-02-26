@@ -227,8 +227,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
                     if (index < pets.length) {
                       final petData = pets[index];
                       return _buildPetCard(
-                        imagePath:
-                            'assets/images/placeholder/pet_placeholder.jpg',
+                        imageUrl: petData['imagen'],
                         name: petData['nombre'],
                         onTap: () => print('Card tapped: ${petData['nombre']}'),
                       );
@@ -266,7 +265,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
   }
 
   Widget _buildPetCard({
-    required String imagePath,
+    required String? imageUrl,
     required String name,
     required VoidCallback onTap,
   }) {
@@ -282,10 +281,21 @@ class __HomePageBodyState extends State<_HomePageBody> {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                ),
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/images/placeholder/pet_placeholder.jpg',
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      )
+                    : Image.asset(
+                        'assets/images/placeholder/pet_placeholder.jpg',
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
             Padding(

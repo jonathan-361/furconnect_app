@@ -33,7 +33,7 @@ class SubscriptionScreen extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: 20,
+            top: 26,
             left: 10,
             child: IconButton(
               icon: const Icon(

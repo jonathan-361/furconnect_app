@@ -55,6 +55,7 @@ class Profile extends StatelessWidget {
               final userData = snapshot.data;
               final userName = userData?['nombre'] ?? 'Usuario no encontrado';
               final userEmail = userData?['email'] ?? 'Correo no disponible';
+              final userImage = userData?['imagen'];
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -75,9 +76,12 @@ class Profile extends StatelessWidget {
                         ),
                         child: CircleAvatar(
                           radius: 70,
-                          backgroundImage: AssetImage(
-                            'assets/images/placeholder/user_placeholder.jpg',
-                          ),
+                          backgroundImage: userImage != null &&
+                                  userImage.isNotEmpty
+                              ? NetworkImage(userImage)
+                              : AssetImage(
+                                      'assets/images/placeholder/user_placeholder.jpg')
+                                  as ImageProvider,
                         ),
                       ),
                       Positioned(

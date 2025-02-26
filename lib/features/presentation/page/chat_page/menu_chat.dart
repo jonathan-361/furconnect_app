@@ -10,7 +10,10 @@ class MenuChat extends StatelessWidget {
         title: const Text('Mensajes'),
       ),
       body: Center(
-        child: Text('Chat'),
+        child: Text(
+          'Pantalla de Chat próximamente...',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+        ),
       ),
     );
   }

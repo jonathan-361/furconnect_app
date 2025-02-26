@@ -38,8 +38,12 @@ class SideBar extends StatelessWidget {
                 accountEmail: Text(userEmail),
                 currentAccountPicture: CircleAvatar(
                   radius: 50,
-                  backgroundImage: AssetImage(
-                      'assets/images/placeholder/user_placeholder.jpg'),
+                  backgroundImage: userData?['imagen'] != null &&
+                          userData?['imagen'].isNotEmpty
+                      ? NetworkImage(userData?['imagen'])
+                      : AssetImage(
+                              'assets/images/placeholder/user_placeholder.jpg')
+                          as ImageProvider,
                 ),
               ),
               ListTile(

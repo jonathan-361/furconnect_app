@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class EditUser extends StatefulWidget {
   const EditUser({super.key});
@@ -29,6 +31,22 @@ class _EditUserState extends State<EditUser> {
 
   bool _isCountrySelected = false;
   bool _isStateSelected = false;
+  bool _isPasswordVisible = false;
+
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    // Selecciona una imagen de la galería
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedImage = File(result.files.single.path!);
+      });
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -61,6 +79,34 @@ class _EditUserState extends State<EditUser> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: _selectedImage != null ? null : 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.add_a_photo,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: nameController,
                   decoration: const InputDecoration(
@@ -140,12 +186,24 @@ class _EditUserState extends State<EditUser> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: passwordController,
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     border: const OutlineInputBorder(),
                     counterText: '',
                     errorText: _passwordError,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                   maxLength: 18,
                   onChanged: (value) {
@@ -183,12 +241,24 @@ class _EditUserState extends State<EditUser> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: confirmPasswordController,
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Confirmar contraseña',
                     border: const OutlineInputBorder(),
                     counterText: '',
                     errorText: _confirmPasswordError,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                   maxLength: 18,
                   onChanged: (value) {

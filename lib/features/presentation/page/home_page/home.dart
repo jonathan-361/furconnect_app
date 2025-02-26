@@ -7,6 +7,7 @@ import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/presentation/page/home_page/side_bar.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
+import 'package:furconnect/features/presentation/page/home_page//app_bar.dart';
 
 // ignore: must_be_immutable
 class HomePage extends StatelessWidget {
@@ -27,22 +28,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            GestureDetector(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage(
-                    'assets/images/placeholder/user_placeholder.jpg'),
-              ),
-            ),
-            SizedBox(width: 10),
-          ],
-        ),
-      ),
+      appBar: CustomAppBar(scaffoldKey: _scaffoldKey),
       drawer: SideBar(),
       body: _HomePageBody(petService: petService),
     );

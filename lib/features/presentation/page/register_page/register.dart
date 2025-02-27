@@ -40,6 +40,9 @@ class _RegisterState extends State<Register> {
   bool _isStateSelected = false;
 
   File? _selectedImage;
+  bool _obscureText = true;
+  bool _obscureTextConfirm = true;
+  String specialCharacters = "!@#\$%&*(),.?\":{}<>._";
 
   final RegisterService _registerService = RegisterService(ApiService());
 
@@ -167,41 +170,6 @@ class _RegisterState extends State<Register> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: double.infinity,
-                  height: _selectedImage != null ? null : 250,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: _selectedImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.file(
-                            _selectedImage!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
-                        )
-                      : const Center(
-                          child: Icon(
-                            Icons.add_a_photo,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
-                        ),
-                ),
-              ),
-              if (_imageError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    _imageError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
-                  ),
-                ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: nameController,
@@ -254,7 +222,8 @@ class _RegisterState extends State<Register> {
                 maxLength: 40,
                 onChanged: (value) {
                   final regex = RegExp(
-                      r"^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com|hotmail\.com)$");
+                      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+
                   if (value.isEmpty) {
                     setState(() {
                       _emailError = 'El correo es obligatorio';
@@ -265,7 +234,7 @@ class _RegisterState extends State<Register> {
                     });
                   } else {
                     setState(() {
-                      _emailError = null; // Si es válido, no hay error
+                      _emailError = null;
                     });
                   }
                 },
@@ -274,21 +243,34 @@ class _RegisterState extends State<Register> {
                     return 'El correo es obligatorio';
                   }
                   final regex = RegExp(
-                      r"^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com|hotmail\.com)$");
+                      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
                   if (!regex.hasMatch(value)) {
                     return 'Por favor ingresa un correo válido';
                   }
-                  return null; // Si es válido, no hay error
+                  return null;
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: passwordController,
-                obscureText: true,
+                obscureText: _obscureText,
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   border: const OutlineInputBorder(),
                   counterText: '',
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  suffix: IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility : Icons.visibility_off,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  ),
                   errorText: _passwordError,
                 ),
                 maxLength: 18,
@@ -299,7 +281,8 @@ class _RegisterState extends State<Register> {
                         _passwordError = 'Debe tener al menos 8 caracteres';
                       } else if (!RegExp(r'[!@#$%^&*(),.?":{}|<>._]')
                           .hasMatch(value)) {
-                        _passwordError = 'Debe incluir al menos un símbolo';
+                        _passwordError =
+                            'Incluye símbolos como: $specialCharacters';
                       } else if (RegExp(
                               r'(?:012|123|234|345|456|567|678|789|890)')
                           .hasMatch(value)) {
@@ -312,7 +295,7 @@ class _RegisterState extends State<Register> {
                         _passwordError =
                             'Debe incluir al menos una letra mayúscula';
                       } else {
-                        _passwordError = null; // Si es válida, no hay error
+                        _passwordError = null;
                       }
                     },
                   );
@@ -327,11 +310,26 @@ class _RegisterState extends State<Register> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: confirmPasswordController,
-                obscureText: true,
+                obscureText: _obscureTextConfirm,
                 decoration: InputDecoration(
                   labelText: 'Confirmar contraseña',
                   border: const OutlineInputBorder(),
                   counterText: '',
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  suffix: IconButton(
+                    icon: Icon(
+                      _obscureTextConfirm
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureTextConfirm = !_obscureTextConfirm;
+                      });
+                    },
+                  ),
                   errorText: _confirmPasswordError,
                 ),
                 maxLength: 18,
@@ -340,7 +338,7 @@ class _RegisterState extends State<Register> {
                     if (value != passwordController.text) {
                       _confirmPasswordError = 'Las contraseñas no coinciden';
                     } else {
-                      _confirmPasswordError = null; // No hay error si coinciden
+                      _confirmPasswordError = null;
                     }
                   });
                 },
@@ -410,8 +408,7 @@ class _RegisterState extends State<Register> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
                 ],
-                enabled:
-                    _isCountrySelected, // Habilitar solo si el país está seleccionado
+                enabled: _isCountrySelected,
                 onChanged: (value) {
                   setState(() {
                     _isStateSelected = value.isNotEmpty;
@@ -431,7 +428,7 @@ class _RegisterState extends State<Register> {
               TextFormField(
                 controller: cityController,
                 decoration: const InputDecoration(
-                  labelText: 'Ciudad',
+                  labelText: 'Localidad',
                   border: OutlineInputBorder(),
                   counterText: '',
                 ),
@@ -440,11 +437,10 @@ class _RegisterState extends State<Register> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
                 ],
-                enabled:
-                    _isStateSelected, // Habilitar solo si el estado está seleccionado
+                enabled: _isStateSelected,
                 validator: (value) {
                   if (_isStateSelected && (value == null || value.isEmpty)) {
-                    return 'La ciudad es obligatoria';
+                    return 'La localidad es obligatoria';
                   }
                   return null;
                 },
@@ -454,7 +450,24 @@ class _RegisterState extends State<Register> {
                 child: SizedBox(
                   width: 200,
                   child: ElevatedButton(
-                    onPressed: _register,
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        final userData = {
+                          'name': nameController.text,
+                          'lastName': lastNameController.text,
+                          'email': emailController.text,
+                          'password': passwordController.text,
+                          'phone': phoneController.text,
+                          'city': cityController.text,
+                          'state': stateController.text,
+                          'country': countryController.text,
+                        };
+                        context.push('/chooseImage', extra: userData);
+                      } else {
+                        AppOverlay.showOverlay(context, Colors.red,
+                            "Termina de rellenar el formulario");
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color.fromARGB(255, 228, 121, 59),
                       foregroundColor: Colors.white,
@@ -465,7 +478,8 @@ class _RegisterState extends State<Register> {
                           EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                     child: const Text(
-                      'Crear cuenta',
+                      'Siguiente',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
                       ),

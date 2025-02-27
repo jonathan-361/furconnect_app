@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
 
+import 'package:furconnect/features/data/services/register_service.dart';
+import 'package:furconnect/features/data/services/api_service.dart';
+
 import 'package:furconnect/features/presentation/page/login_page/login.dart';
 import 'package:furconnect/features/presentation/page/register_page/register.dart';
+import 'package:furconnect/features/presentation/page/register_page/choose_image.dart';
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/botton_navigation_bar/botton_navigation_bar.dart';
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
@@ -24,6 +28,16 @@ final router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => Register(),
+    ),
+    GoRoute(
+      path: '/chooseImage',
+      builder: (context, state) {
+        final userData = state.extra as Map<String, String>;
+        return ChooseImage(
+          userData: userData,
+          registerService: RegisterService(ApiService()),
+        );
+      },
     ),
     GoRoute(
       path: '/navigationBar',

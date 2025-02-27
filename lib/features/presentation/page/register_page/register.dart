@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
-import 'package:image/image.dart' as img;
-import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 
-import 'package:furconnect/features/data/services/register_service.dart';
-import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class Register extends StatefulWidget {
@@ -34,128 +28,13 @@ class _RegisterState extends State<Register> {
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
-  String? _imageError;
 
   bool _isCountrySelected = false;
   bool _isStateSelected = false;
 
-  File? _selectedImage;
   bool _obscureText = true;
   bool _obscureTextConfirm = true;
   String specialCharacters = "!@#\$%&*(),.?\":{}<>._";
-
-  final RegisterService _registerService = RegisterService(ApiService());
-
-  Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      final file = File(result.files.single.path!);
-
-      setState(() {
-        _selectedImage = file;
-        _imageError = null;
-      });
-    }
-  }
-
-  Future<Uint8List> _compressImage(File imageFile) async {
-    final image = img.decodeImage(await imageFile.readAsBytes())!;
-    final resizedImage = img.copyResize(image, width: 800);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
-
-    if (compressedImageBytes.length > 400 * 1024) {
-      return _compressImageWithLowerQuality(image);
-    }
-
-    return compressedImageBytes;
-  }
-
-  Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
-    final resizedImage = img.copyResize(image, width: 600);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
-    return compressedImageBytes;
-  }
-
-  Future<String?> uploadImageDio(File image) async {
-    try {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromBytes(
-          await image.readAsBytes(),
-          filename: 'image.jpg',
-        ),
-        'upload_preset': 'upload_image_flutter',
-      });
-
-      final response = await Dio().post(
-        'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
-        data: formData,
-      );
-
-      if (response.statusCode == 200) {
-        final imageUrl = response.data['secure_url'];
-        print('Imagen subida con éxito: $imageUrl');
-        return imageUrl;
-      } else {
-        print('Error al subir la imagen: ${response.statusMessage}');
-        return null;
-      }
-    } catch (e) {
-      print('Excepción al subir imagen: $e');
-      return null;
-    }
-  }
-
-  void _register() async {
-    setState(() {
-      _imageError =
-          _selectedImage == null ? 'Debe seleccionar una imagen' : null;
-    });
-
-    if (_selectedImage == null) return;
-
-    if (_formKey.currentState?.validate() ?? false) {
-      try {
-        Uint8List compressedImage = await _compressImage(_selectedImage!);
-        File compressedFile = File('${_selectedImage!.path}_compressed.jpg');
-        await compressedFile.writeAsBytes(compressedImage);
-
-        String? imageUrl = await uploadImageDio(compressedFile);
-
-        if (imageUrl != null) {
-          final success = await _registerService.registerUser(
-            imageUrl,
-            nameController.text,
-            lastNameController.text,
-            emailController.text,
-            passwordController.text,
-            phoneController.text,
-            cityController.text,
-            stateController.text,
-            countryController.text,
-          );
-
-          if (success) {
-            AppOverlay.showOverlay(
-                context, Colors.green, "Cuenta creada éxitosamente");
-            context.pop();
-          }
-        } else {
-          AppOverlay.showOverlay(
-              context, Colors.red, "Error al subir la imagen");
-        }
-      } on SocketException catch (_) {
-        AppOverlay.showOverlay(
-            context, Colors.red, "No hay conexión a internet");
-      } catch (err) {
-        AppOverlay.showOverlay(
-            context, Colors.red, "Ha ocurrido un error desconocido");
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

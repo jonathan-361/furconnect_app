@@ -120,17 +120,6 @@ class __HomePageBodyState extends State<_HomePageBody> {
                 children: [
                   Expanded(
                     child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Color.fromRGBO(0, 0, 0, 0.2),
-                          ],
-                          stops: [0.8, 1.0],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                      ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Wrap(

@@ -1,4 +1,4 @@
-final List<String> temperaments = [
+final List<String> breedList = [
   'Dalmata',
   'Malix',
   'Schnauzer',

@@ -25,6 +25,8 @@ class ChooseImage extends StatefulWidget {
 
 class _ChooseImageState extends State<ChooseImage> {
   File? _selectedImage;
+  final String defaultImageUrl =
+      "https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg";
 
   Future<File?> pickImage() async {
     final result = await FilePicker.platform.pickFiles(
@@ -86,47 +88,75 @@ class _ChooseImageState extends State<ChooseImage> {
   }
 
   Future<void> register(File? selectedImage, BuildContext context) async {
-    if (selectedImage == null) {
-      AppOverlay.showOverlay(
-          context, Colors.red, "Debe seleccionar una imágen");
-      return;
-    }
+    String imageUrl = defaultImageUrl;
 
-    try {
-      Uint8List compressedImage = await compressImage(selectedImage);
-      File compressedFile = File('${selectedImage.path}_compressed.jpg');
-      await compressedFile.writeAsBytes(compressedImage);
+    if (selectedImage != null) {
+      try {
+        Uint8List compressedImage = await compressImage(selectedImage);
+        File compressedFile = File('${selectedImage.path}_compressed.jpg');
+        await compressedFile.writeAsBytes(compressedImage);
 
-      String? imageUrl = await uploadImageDio(compressedFile);
-
-      if (imageUrl != null) {
-        final success = await widget.registerService.registerUser(
-          imageUrl,
-          widget.userData['name']!,
-          widget.userData['lastName']!,
-          widget.userData['email']!,
-          widget.userData['password']!,
-          widget.userData['phone']!,
-          widget.userData['city']!,
-          widget.userData['state']!,
-          widget.userData['country']!,
-        );
-
-        if (success) {
+        String? uploadedImageUrl = await uploadImageDio(compressedFile);
+        if (uploadedImageUrl != null) {
+          imageUrl = uploadedImageUrl;
+        } else {
           AppOverlay.showOverlay(
-              context, Colors.green, "Cuenta creada éxitosamente");
-
-          context.go('/login');
+              context, Colors.red, "Error al subir la imagen");
+          return;
         }
-      } else {
-        AppOverlay.showOverlay(context, Colors.red, "Error al subir la imagen");
+      } on SocketException {
+        AppOverlay.showOverlay(
+            context, Colors.red, "No hay conexión a internet");
+        return;
+      } catch (err) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "Ha ocurrido un error desconocido");
+        return;
       }
-    } on SocketException catch (_) {
-      AppOverlay.showOverlay(context, Colors.red, "No hay conexión a internet");
-    } catch (err) {
-      AppOverlay.showOverlay(
-          context, Colors.red, "Ha ocurrido un error desconocido");
     }
+
+    final success = await widget.registerService.registerUser(
+      imageUrl,
+      widget.userData['name']!,
+      widget.userData['lastName']!,
+      widget.userData['email']!,
+      widget.userData['password']!,
+      widget.userData['phone']!,
+      widget.userData['city']!,
+      widget.userData['state']!,
+      widget.userData['country']!,
+    );
+
+    if (success) {
+      AppOverlay.showOverlay(
+          context, Colors.green, "Cuenta creada exitosamente");
+      context.go('/login');
+    }
+  }
+
+  void showConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text("Confirmar"),
+          content: Text("¿Deseas crear tu cuenta sin una foto de perfil?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                register(null, context);
+              },
+              child: Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -193,12 +223,9 @@ class _ChooseImageState extends State<ChooseImage> {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (_selectedImage != null) {
-                          await register(_selectedImage, context);
+                          register(_selectedImage, context);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Debe seleccionar una imagen')),
-                          );
+                          showConfirmDialog(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(

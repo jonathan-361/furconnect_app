@@ -3,15 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:dio/dio.dart';
 import 'package:image/image.dart' as img;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
+import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedList.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
 
 class NewPet extends StatefulWidget {
@@ -31,14 +32,14 @@ class _NewPetState extends State<NewPet> {
   final _colorController = TextEditingController();
   final _ageController = TextEditingController();
   final _vacuumController = TextEditingController();
-  final PageController _pageController = PageController();
+  final PageController _pageController = PageController(viewportFraction: 0.3);
 
   bool _hasPedigree = false;
   String? selectedSize;
   String? selectedGender;
   String? selectedTemperament;
   List<String> vaccines = [];
-  List<File> _selectedImages = [];
+  List<File?> _selectedImages = [null, null, null, null];
   bool _imageError = false;
   String? _error;
   List<String> imagesPet = [];
@@ -46,7 +47,9 @@ class _NewPetState extends State<NewPet> {
   final List<String> sizes = ['Pequeño', 'Mediano', 'Grande'];
   final List<String> genders = ['Macho', 'Hembra'];
 
-  Future<void> _pickFiles() async {
+  String petPlus = 'assets/images/svg/pet.svg';
+
+  Future<void> _pickFiles(int index) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
@@ -63,7 +66,10 @@ class _NewPetState extends State<NewPet> {
       }
 
       setState(() {
-        _selectedImages = compressedImages.take(4).toList();
+        // Colocar las imágenes seleccionadas en las posiciones correspondientes
+        for (int i = 0; i < compressedImages.length && index + i < 4; i++) {
+          _selectedImages[index + i] = compressedImages[i];
+        }
         _imageError = false;
       });
       print('Imágenes seleccionadas y comprimidas: ${_selectedImages.length}');
@@ -148,7 +154,8 @@ class _NewPetState extends State<NewPet> {
 
       try {
         if (_selectedImages.isNotEmpty) {
-          List<String> uploadedUrls = await uploadImagesDio(_selectedImages);
+          List<File> nonNullImages = _selectedImages.whereType<File>().toList();
+          List<String> uploadedUrls = await uploadImagesDio(nonNullImages);
 
           if (uploadedUrls.isNotEmpty) {
             imagesPet = uploadedUrls;
@@ -258,241 +265,263 @@ class _NewPetState extends State<NewPet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: _pickFiles,
-                        child: Column(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: _selectedImages.isNotEmpty ? 250 : 200,
-                              constraints: _selectedImages.isNotEmpty
-                                  ? const BoxConstraints(maxHeight: 400)
-                                  : null,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: _selectedImages.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Stack(
-                                        alignment: Alignment.bottomCenter,
-                                        children: [
-                                          PageView.builder(
-                                            controller: _pageController,
-                                            itemCount: _selectedImages.length,
-                                            itemBuilder: (context, index) {
-                                              return Image.file(
-                                                _selectedImages[index],
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                              );
-                                            },
+                      SizedBox(
+                        height: 120, // Altura fija
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(4, (index) {
+                              return GestureDetector(
+                                onTap: () => _pickFiles(index),
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: 5), // Espacio entre imágenes
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: _selectedImages[index] != null
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.file(
+                                            _selectedImages[index]!,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100,
                                           ),
-                                          Positioned(
-                                            bottom: 8,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 6),
-                                              decoration: BoxDecoration(
-                                                color: const Color.fromRGBO(
-                                                    0, 0, 0, 0.8),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: SmoothPageIndicator(
-                                                controller: _pageController,
-                                                count: _selectedImages.length,
-                                                effect: WormEffect(
-                                                  dotHeight: 8,
-                                                  dotWidth: 8,
-                                                  activeDotColor: Colors.blue,
-                                                  dotColor: Colors.grey,
-                                                ),
-                                              ),
-                                            ),
+                                        )
+                                      : Center(
+                                          child: SvgPicture.asset(
+                                            petPlus,
+                                            height: 50,
+                                            width: 50,
+                                            colorFilter: ColorFilter.mode(
+                                                const Color.fromARGB(
+                                                    255, 153, 91, 62),
+                                                BlendMode.srcIn),
                                           ),
-                                        ],
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.add_a_photo,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                            ),
-                            if (_imageError)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 8),
-                                child: Text(
-                                  "Por favor selecciona una imagen",
-                                  style: TextStyle(
-                                      color: Colors.red, fontSize: 12),
+                                        ),
                                 ),
-                              ),
-                          ],
+                              );
+                            }),
+                          ),
                         ),
                       ),
+                      if (_imageError)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            "Selecciona una imagen",
+                            style: TextStyle(color: Colors.red, fontSize: 10),
+                          ),
+                        ),
                       const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: "Nombre",
-                          counterText: '',
+                      SizedBox(
+                        height: 50,
+                        child: TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: "Nombre",
+                            counterText: '',
+                          ),
+                          maxLength: 18,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor ingresa un nombre";
+                            }
+                            return null;
+                          },
                         ),
-                        maxLength: 18,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor ingresa un nombre";
-                          }
-                          return null;
-                        },
                       ),
-                      TextFormField(
-                        controller: _breedController,
-                        decoration: const InputDecoration(
-                          labelText: "Raza",
-                          counterText: '',
-                        ),
-                        maxLength: 18,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor ingresa una raza";
+                      Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return const Iterable<String>.empty();
                           }
-                          return null;
+                          return breedList.where((breed) => breed
+                              .toLowerCase()
+                              .contains(textEditingValue.text.toLowerCase()));
                         },
-                      ),
-                      TextFormField(
-                        controller: _colorController,
-                        decoration: const InputDecoration(
-                          labelText: "Color",
-                          counterText: '',
-                        ),
-                        maxLength: 25,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor ingresa un color";
-                          }
-                          return null;
+                        onSelected: (String selection) {
+                          _breedController.text = selection;
                         },
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: selectedSize,
-                        decoration: const InputDecoration(labelText: 'Tamaño'),
-                        items: sizes.map((String size) {
-                          return DropdownMenuItem<String>(
-                            value: size,
-                            child: Text(size),
+                        fieldViewBuilder: (context, controller, focusNode,
+                            onEditingComplete) {
+                          return SizedBox(
+                            height: 50,
+                            child: TextFormField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              decoration: const InputDecoration(
+                                labelText: "Raza",
+                                counterText: '',
+                              ),
+                              style: const TextStyle(fontSize: 17),
+                              maxLength: 18,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
+                                ),
+                              ],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor ingresa una raza";
+                                }
+                                return null;
+                              },
+                            ),
                           );
-                        }).toList(),
-                        onChanged: (String? newSize) {
-                          setState(() {
-                            selectedSize = newSize;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor selecciona un tamaño";
-                          }
-                          return null;
                         },
                       ),
-                      TextFormField(
-                        controller: _ageController,
-                        decoration: const InputDecoration(
-                          labelText: "Edad",
-                          counterText: '',
+                      SizedBox(
+                        height: 50,
+                        child: TextFormField(
+                          controller: _colorController,
+                          decoration: const InputDecoration(
+                            labelText: "Color",
+                            counterText: '',
+                          ),
+                          style: TextStyle(fontSize: 17),
+                          maxLength: 25,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor ingresa un color";
+                            }
+                            return null;
+                          },
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(2),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor ingresa una edad";
-                          }
-                          return null;
-                        },
                       ),
-                      DropdownButtonFormField<String>(
-                        value: selectedGender,
-                        decoration: const InputDecoration(labelText: 'Sexo'),
-                        items: genders.map((String gender) {
-                          return DropdownMenuItem<String>(
-                            value: gender,
-                            child: Text(gender),
-                          );
-                        }).toList(),
-                        onChanged: (String? newGender) {
-                          setState(() {
-                            selectedGender = newGender;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor selecciona el sexo";
-                          }
-                          return null;
-                        },
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: selectedTemperament,
-                        decoration:
-                            const InputDecoration(labelText: 'Temperamento'),
-                        items: temperaments.map((String temperament) {
-                          return DropdownMenuItem<String>(
-                            value: temperament,
-                            child: Text(temperament),
-                          );
-                        }).toList(),
-                        onChanged: (String? newTemperament) {
-                          setState(() {
-                            selectedTemperament = newTemperament;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Por favor selecciona el temperamento";
-                          }
-                          return null;
-                        },
-                      ),
-                      TextFormField(
-                        controller: _vacuumController,
-                        decoration: const InputDecoration(
-                          labelText: "Vacunas",
-                          counterText: '',
-                        ),
-                        maxLength: 15,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                        ],
-                        onChanged: (value) {
-                          if (value.trim().isNotEmpty && value.contains(' ')) {
+                      SizedBox(
+                        height: 50,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedSize,
+                          decoration:
+                              const InputDecoration(labelText: 'Tamaño'),
+                          items: sizes.map((String size) {
+                            return DropdownMenuItem<String>(
+                              value: size,
+                              child: Text(size),
+                            );
+                          }).toList(),
+                          onChanged: (String? newSize) {
                             setState(() {
-                              vaccines.add(value.trim());
-                              _vacuumController.clear();
+                              selectedSize = newSize;
                             });
-                          }
-                        },
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor selecciona un tamaño";
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        height: 50,
+                        child: TextFormField(
+                          controller: _ageController,
+                          decoration: const InputDecoration(
+                            labelText: "Edad",
+                            counterText: '',
+                          ),
+                          style: TextStyle(fontSize: 17),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(2),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor ingresa una edad";
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        height: 50,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedGender,
+                          decoration: const InputDecoration(labelText: 'Sexo'),
+                          items: genders.map((String gender) {
+                            return DropdownMenuItem<String>(
+                              value: gender,
+                              child: Text(gender),
+                            );
+                          }).toList(),
+                          onChanged: (String? newGender) {
+                            setState(() {
+                              selectedGender = newGender;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor selecciona el sexo";
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        height: 50,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedTemperament,
+                          decoration:
+                              const InputDecoration(labelText: 'Temperamento'),
+                          items: temperaments.map((String temperament) {
+                            return DropdownMenuItem<String>(
+                              value: temperament,
+                              child: Text(temperament),
+                            );
+                          }).toList(),
+                          onChanged: (String? newTemperament) {
+                            setState(() {
+                              selectedTemperament = newTemperament;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Por favor selecciona el temperamento";
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        height: 50,
+                        child: TextFormField(
+                          controller: _vacuumController,
+                          decoration: const InputDecoration(
+                            labelText: "Vacunas",
+                            counterText: '',
+                          ),
+                          style: TextStyle(fontSize: 17),
+                          maxLength: 15,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
+                          ],
+                          onChanged: (value) {
+                            if (value.trim().isNotEmpty &&
+                                value.contains(' ')) {
+                              setState(() {
+                                vaccines.add(value.trim());
+                                _vacuumController.clear();
+                              });
+                            }
+                          },
+                        ),
                       ),
                       Wrap(
                         spacing: 8.0,
@@ -525,12 +554,23 @@ class _NewPetState extends State<NewPet> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Center(
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width,
                         child: ElevatedButton(
                           onPressed: _addPet,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 228, 121, 59),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                          ),
                           child: const Text(
                             "Agregar mascota",
                             style: TextStyle(
+                              fontSize: 18,
                               fontFamily: 'Nunito',
                               fontWeight: FontWeight.w600,
                             ),

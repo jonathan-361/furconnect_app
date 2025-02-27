@@ -26,8 +26,7 @@ class SideBar extends StatelessWidget {
           final userData = snapshot.data;
           final userName =
               _formatWord(userData?['nombre'] ?? 'Nombre no disponible');
-          final userEmail =
-              _formatWord(userData?['email'] ?? 'example@gmail.com');
+          final userEmail = userData?['email'] ?? 'example@gmail.com';
 
           return Column(
             children: [

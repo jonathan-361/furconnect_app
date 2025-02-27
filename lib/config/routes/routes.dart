@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:furconnect/features/data/services/register_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 
+import 'package:furconnect/features/presentation/page/test_page/test.dart';
 import 'package:furconnect/features/presentation/page/login_page/login.dart';
 import 'package:furconnect/features/presentation/page/register_page/register.dart';
 import 'package:furconnect/features/presentation/page/register_page/choose_image.dart';
@@ -21,6 +22,10 @@ import 'package:furconnect/features/presentation/widget/pet_card_home.dart';
 final router = GoRouter(
   initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/testPage',
+      builder: (context, state) => Test(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => Login(),

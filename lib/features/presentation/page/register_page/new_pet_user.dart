@@ -16,14 +16,14 @@ import 'package:furconnect/features/presentation/page/pet_page/listOptions/breed
 import 'package:furconnect/features/presentation/widget/overlay.dart';
 import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
 
-class NewPet extends StatefulWidget {
-  const NewPet({super.key});
+class NewPetUser extends StatefulWidget {
+  const NewPetUser({super.key});
 
   @override
-  _NewPetState createState() => _NewPetState();
+  _NewPetUserState createState() => _NewPetUserState();
 }
 
-class _NewPetState extends State<NewPet> {
+class _NewPetUserState extends State<NewPetUser> {
   final PetService _petService =
       PetService(ApiService(), LoginService(ApiService()));
 
@@ -214,7 +214,7 @@ class _NewPetState extends State<NewPet> {
 
           Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted) {
-              context.pop();
+              context.go('/navigationBar');
             }
           });
           return true;
@@ -230,7 +230,6 @@ class _NewPetState extends State<NewPet> {
       } on SocketException catch (_) {
         setState(() {
           _error = 'Error de conexión. Verifica tu conexión a internet.';
-          hideLoadingOverlay();
         });
         AppOverlay.showOverlay(
             context, Colors.red, "Verifica tu conexión a internet.");
@@ -264,16 +263,6 @@ class _NewPetState extends State<NewPet> {
           fontSize: 20,
           fontFamily: 'RobotoR',
           fontWeight: FontWeight.w600,
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 30,
-          ),
-          onPressed: () {
-            context.pop();
-          },
         ),
       ),
       body: Stack(

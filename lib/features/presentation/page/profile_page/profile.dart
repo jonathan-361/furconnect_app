@@ -43,7 +43,7 @@ class Profile extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: FutureBuilder<Map<String, dynamic>?>(
-          future: _loadUserData(), // Llamada a la función asíncrona
+          future: _loadUserData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // Mientras se cargan los datos
@@ -89,11 +89,11 @@ class Profile extends StatelessWidget {
                         right: 0,
                         child: GestureDetector(
                           onTap: () {
-                            //context.push('/editUser', extra: userData);
+                            context.push('/editUser', extra: userData);
                           },
                           child: Container(
-                            width: 35,
-                            height: 35,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 255, 255),
                               shape: BoxShape.circle,
@@ -108,7 +108,7 @@ class Profile extends StatelessWidget {
                             ),
                             child: Icon(
                               Icons.edit,
-                              size: 20,
+                              size: 22,
                             ),
                           ),
                         ),

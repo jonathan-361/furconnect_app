@@ -20,18 +20,21 @@ class RegisterService {
     String pais,
   ) async {
     try {
-      final response = await _apiService.post('/users', data: {
-        "imagen": imagen,
-        "nombre": nombre,
-        "apellido": apellido,
-        "email": email,
-        "password": password,
-        "telefono": telefono,
-        "ciudad": ciudad,
-        "estado": estado,
-        "pais": pais,
-        "role": "user"
-      });
+      final response = await _apiService.post(
+        '/users',
+        data: {
+          "imagen": imagen,
+          "nombre": nombre,
+          "apellido": apellido,
+          "email": email,
+          "password": password,
+          "telefono": telefono,
+          "ciudad": ciudad,
+          "estado": estado,
+          "pais": pais,
+          "role": "user"
+        },
+      );
 
       if (response.statusCode == 201) {
         _logger.i('Usuario creado exitosamente');

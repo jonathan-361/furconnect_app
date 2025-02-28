@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
+import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -19,6 +20,7 @@ class _LoginState extends State<Login> {
 
   late final LoginService _loginService;
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -28,6 +30,10 @@ class _LoginState extends State<Login> {
 
   void _validateAndLogin() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
         String? token = await _loginService.login(
           _emailController.text,
@@ -35,11 +41,17 @@ class _LoginState extends State<Login> {
         );
         AppOverlay.showOverlay(
             context, Colors.green, "Inicio de sesión éxitoso");
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(milliseconds: 300));
+        setState(() {
+          _isLoading = false;
+        });
         context.go('/navigationBar');
-      } catch (e) {
-        AppOverlay.showOverlay(context, Colors.red, "$e");
-        await Future.delayed(const Duration(seconds: 2));
+      } catch (err) {
+        AppOverlay.showOverlay(context, Colors.red, "$err");
+        await Future.delayed(const Duration(milliseconds: 300));
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -221,6 +233,7 @@ class _LoginState extends State<Login> {
               ),
             ),
           ),
+          if (_isLoading) const LoadingOverlay(),
         ],
       ),
     );

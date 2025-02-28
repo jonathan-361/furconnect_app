@@ -7,6 +7,7 @@ import 'package:furconnect/features/presentation/page/test_page/test.dart';
 import 'package:furconnect/features/presentation/page/login_page/login.dart';
 import 'package:furconnect/features/presentation/page/register_page/register.dart';
 import 'package:furconnect/features/presentation/page/register_page/choose_image.dart';
+import 'package:furconnect/features/presentation/page/register_page/new_pet_user.dart';
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/botton_navigation_bar/botton_navigation_bar.dart';
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
@@ -43,6 +44,10 @@ final router = GoRouter(
           registerService: RegisterService(ApiService()),
         );
       },
+    ),
+    GoRoute(
+      path: '/newPetUser',
+      builder: (context, state) => NewPetUser(),
     ),
     GoRoute(
       path: '/navigationBar',

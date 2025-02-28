@@ -60,7 +60,8 @@ class _RegisterState extends State<Register> {
                 maxLength: 25,
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-ZÀ-ÿ\s]+$')),
+                    RegExp(r'^[a-zA-ZÀ-ÿ\s]+$'),
+                  ),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -80,7 +81,8 @@ class _RegisterState extends State<Register> {
                 maxLength: 25,
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-ZÀ-ÿ\s]+$')),
+                    RegExp(r'^[a-zA-ZÀ-ÿ\s]+$'),
+                  ),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {

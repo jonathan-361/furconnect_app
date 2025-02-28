@@ -52,7 +52,7 @@ class ApiService {
   Future<Response> put(String endpoint,
       {Map<String, dynamic>? data, Map<String, dynamic>? headers}) async {
     try {
-      return await _dio.post(
+      return await _dio.put(
         endpoint,
         data: data,
         options: Options(headers: headers),

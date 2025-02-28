@@ -19,23 +19,36 @@ class LoginService {
 
     if (response.statusCode == 200) {
       final token = response.data['token'];
-      _authToken = token;
-      _tokenExpiration = DateTime.now().add(Duration(hours: 1));
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', token);
-      await prefs.setString('email', email);
-      await prefs.setString('password', password);
+      _saveToken(token);
+      _saveCredentials(email, password);
       return token;
     } else {
       throw Exception("Error al iniciar sesión: ${response.statusMessage}");
     }
   }
 
+  Future<void> _saveToken(String token) async {
+    _authToken = token;
+    _tokenExpiration = DateTime.now().add(Duration(hours: 1));
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString(
+        'token_expiration', _tokenExpiration!.toIso8601String());
+  }
+
+  Future<void> _saveCredentials(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+    await prefs.setString('password', password);
+  }
+
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('token');
-    _tokenExpiration = DateTime.now().add(Duration(hours: 1));
+    _tokenExpiration = prefs.getString('token_expiration') != null
+        ? DateTime.parse(prefs.getString('token_expiration')!)
+        : null;
   }
 
   Future<void> refreshToken() async {
@@ -57,10 +70,7 @@ class LoginService {
 
     if (response.statusCode == 200) {
       final token = response.data['token'];
-      _authToken = token;
-      _tokenExpiration = DateTime.now().add(Duration(hours: 1));
-
-      await prefs.setString('token', token);
+      await _saveToken(token);
     } else {
       throw Exception("Error al refrescar el token: ${response.statusMessage}");
     }
@@ -80,14 +90,15 @@ class LoginService {
     return _authToken;
   }
 
-  void logout() {
+  Future<void> logout() async {
     _authToken = null;
     _tokenExpiration = null;
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.remove('token');
-      prefs.remove('email');
-      prefs.remove('password');
-    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('token_expiration');
+    await prefs.remove('email');
+    await prefs.remove('password');
   }
 
   bool isAuthenticated() {

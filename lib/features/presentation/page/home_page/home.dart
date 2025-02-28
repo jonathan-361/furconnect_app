@@ -51,6 +51,8 @@ class __HomePageBodyState extends State<_HomePageBody> {
   int currentPage = 1;
   bool isLoading = false;
   bool hasMore = true;
+  double _previousScrollOffset = 0.0;
+  final double _scrollThreshold = 300.0;
 
   @override
   void initState() {
@@ -93,10 +95,15 @@ class __HomePageBodyState extends State<_HomePageBody> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+    double currentScrollOffset = _scrollController.position.pixels;
+
+    if (currentScrollOffset == 0 &&
+        (_previousScrollOffset - currentScrollOffset).abs() >=
+            _scrollThreshold) {
       _loadPets();
     }
+
+    _previousScrollOffset = currentScrollOffset;
   }
 
   Future<void> _refreshPets() async {

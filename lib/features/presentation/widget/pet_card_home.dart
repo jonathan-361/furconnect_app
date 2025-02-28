@@ -1,10 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:furconnect/features/presentation/widget/send_request.dart';
 
 class PetCardHome extends StatelessWidget {
   final Map<String, dynamic> petData;
 
   const PetCardHome({super.key, required this.petData});
+
+  Widget _showPetImages(BuildContext context) {
+    List<String> images = [];
+
+    if (petData['imagen'] != null && petData['imagen'].isNotEmpty) {
+      images.add(petData['imagen']);
+    }
+
+    if (petData['media'] != null && petData['media'].isNotEmpty) {
+      images.addAll(List<String>.from(petData['media']));
+    }
+
+    if (images.isEmpty) {
+      images.add('assets/images/placeholder/item_pet_placeholder.jpg');
+    }
+
+    final PageController controller = PageController();
+
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height / 1.6,
+      child: PageView.builder(
+        controller: controller,
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          return Image.network(
+            images[index],
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height / 1.6,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                'assets/images/placeholder/item_pet_placeholder.jpg',
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height / 1.6,
+                fit: BoxFit.cover,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +58,7 @@ class PetCardHome extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          Positioned(
-            child: Image.asset(
-              'assets/images/placeholder/pet_placeholder.jpg',
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height / 1.6,
-              fit: BoxFit.cover,
-            ),
-          ),
+          _showPetImages(context),
           LayoutBuilder(
             builder: (context, constraints) {
               double imageHeight = MediaQuery.of(context).size.height / 1.8;

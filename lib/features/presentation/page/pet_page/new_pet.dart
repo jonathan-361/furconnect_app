@@ -254,361 +254,371 @@ class _NewPetState extends State<NewPet> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Agregar mascota"),
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: Color.fromARGB(255, 0, 0, 0),
-          fontSize: 20,
-          fontFamily: 'RobotoR',
-          fontWeight: FontWeight.w600,
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 30,
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text("Agregar mascota"),
+            backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              color: Color.fromARGB(255, 0, 0, 0),
+              fontSize: 20,
+              fontFamily: 'RobotoR',
+              fontWeight: FontWeight.w600,
+            ),
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.black,
+                size: 30,
+              ),
+              onPressed: () {
+                context.pop();
+              },
+            ),
           ),
-          onPressed: () {
-            context.pop();
-          },
-        ),
-      ),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          body: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
                     children: [
-                      SizedBox(
-                        height: 120, // Altura fija
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: List.generate(4, (index) {
-                              return GestureDetector(
-                                onTap: () => _pickFiles(index),
-                                child: Container(
-                                  width: 100,
-                                  height: 100,
-                                  margin: EdgeInsets.symmetric(
-                                      horizontal: 5), // Espacio entre imágenes
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: _selectedImages[index] != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Image.file(
-                                            _selectedImages[index]!,
-                                            fit: BoxFit.cover,
-                                            width: 100,
-                                            height: 100,
-                                          ),
-                                        )
-                                      : Center(
-                                          child: SvgPicture.asset(
-                                            petPlus,
-                                            height: 50,
-                                            width: 50,
-                                            colorFilter: ColorFilter.mode(
-                                                const Color.fromARGB(
-                                                    255, 153, 91, 62),
-                                                BlendMode.srcIn),
-                                          ),
-                                        ),
-                                ),
-                              );
-                            }),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 120, // Altura fija
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: List.generate(4, (index) {
+                                  return GestureDetector(
+                                    onTap: () => _pickFiles(index),
+                                    child: Container(
+                                      width: 100,
+                                      height: 100,
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal:
+                                              5), // Espacio entre imágenes
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: _selectedImages[index] != null
+                                          ? ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Image.file(
+                                                _selectedImages[index]!,
+                                                fit: BoxFit.cover,
+                                                width: 100,
+                                                height: 100,
+                                              ),
+                                            )
+                                          : Center(
+                                              child: SvgPicture.asset(
+                                                petPlus,
+                                                height: 50,
+                                                width: 50,
+                                                colorFilter: ColorFilter.mode(
+                                                    const Color.fromARGB(
+                                                        255, 153, 91, 62),
+                                                    BlendMode.srcIn),
+                                              ),
+                                            ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      if (_imageError)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Text(
-                            "Selecciona una imagen",
-                            style: TextStyle(color: Colors.red, fontSize: 10),
-                          ),
-                        ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: "Nombre",
-                            counterText: '',
-                          ),
-                          maxLength: 18,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa un nombre";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      Autocomplete<String>(
-                        optionsBuilder: (TextEditingValue textEditingValue) {
-                          if (textEditingValue.text.isEmpty) {
-                            return const Iterable<String>.empty();
-                          }
-                          return breedList.where((breed) => breed
-                              .toLowerCase()
-                              .contains(textEditingValue.text.toLowerCase()));
-                        },
-                        onSelected: (String selection) {
-                          _breedController.text = selection;
-                        },
-                        fieldViewBuilder: (context, controller, focusNode,
-                            onEditingComplete) {
-                          return SizedBox(
+                          if (_imageError)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Text(
+                                "Selecciona una imagen",
+                                style:
+                                    TextStyle(color: Colors.red, fontSize: 10),
+                              ),
+                            ),
+                          const SizedBox(height: 10),
+                          SizedBox(
                             height: 50,
                             child: TextFormField(
-                              controller: controller,
-                              focusNode: focusNode,
+                              controller: _nameController,
                               decoration: const InputDecoration(
-                                labelText: "Raza",
+                                labelText: "Nombre",
                                 counterText: '',
                               ),
-                              style: const TextStyle(fontSize: 17),
                               maxLength: 18,
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(
-                                  RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
-                                ),
+                                    RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
                               ],
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "Por favor ingresa una raza";
+                                  return "Por favor ingresa un nombre";
                                 }
                                 return null;
                               },
                             ),
-                          );
-                        },
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _colorController,
-                          decoration: const InputDecoration(
-                            labelText: "Color",
-                            counterText: '',
                           ),
-                          style: TextStyle(fontSize: 17),
-                          maxLength: 25,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa un color";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedSize,
-                          decoration:
-                              const InputDecoration(labelText: 'Tamaño'),
-                          items: sizes.map((String size) {
-                            return DropdownMenuItem<String>(
-                              value: size,
-                              child: Text(size),
-                            );
-                          }).toList(),
-                          onChanged: (String? newSize) {
-                            setState(() {
-                              selectedSize = newSize;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona un tamaño";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _ageController,
-                          decoration: const InputDecoration(
-                            labelText: "Edad",
-                            counterText: '',
-                          ),
-                          style: TextStyle(fontSize: 17),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(2),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa una edad";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedGender,
-                          decoration: const InputDecoration(labelText: 'Sexo'),
-                          items: genders.map((String gender) {
-                            return DropdownMenuItem<String>(
-                              value: gender,
-                              child: Text(gender),
-                            );
-                          }).toList(),
-                          onChanged: (String? newGender) {
-                            setState(() {
-                              selectedGender = newGender;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona el sexo";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedTemperament,
-                          decoration:
-                              const InputDecoration(labelText: 'Temperamento'),
-                          items: temperaments.map((String temperament) {
-                            return DropdownMenuItem<String>(
-                              value: temperament,
-                              child: Text(temperament),
-                            );
-                          }).toList(),
-                          onChanged: (String? newTemperament) {
-                            setState(() {
-                              selectedTemperament = newTemperament;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona el temperamento";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _vacuumController,
-                          decoration: const InputDecoration(
-                            labelText: "Vacunas",
-                            counterText: '',
-                          ),
-                          style: TextStyle(fontSize: 17),
-                          maxLength: 15,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                          ],
-                          onChanged: (value) {
-                            if (value.trim().isNotEmpty &&
-                                value.contains(' ')) {
-                              setState(() {
-                                vaccines.add(value.trim());
-                                _vacuumController.clear();
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: vaccines.map((vaccine) {
-                          return Chip(
-                            label: Text(vaccine),
-                            deleteIcon: const Icon(Icons.close),
-                            onDeleted: () {
-                              setState(() {
-                                vaccines.remove(vaccine);
-                              });
+                          Autocomplete<String>(
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return breedList.where((breed) => breed
+                                  .toLowerCase()
+                                  .contains(
+                                      textEditingValue.text.toLowerCase()));
                             },
-                          );
-                        }).toList(),
-                      ),
-                      Row(
-                        children: [
-                          const Text("Pedigree:"),
-                          Checkbox(
-                            value: _hasPedigree,
-                            onChanged: (bool? value) {
-                              setState(
-                                () {
-                                  _hasPedigree = value ?? false;
-                                },
+                            onSelected: (String selection) {
+                              _breedController.text = selection;
+                            },
+                            fieldViewBuilder: (context, controller, focusNode,
+                                onEditingComplete) {
+                              return SizedBox(
+                                height: 50,
+                                child: TextFormField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  decoration: const InputDecoration(
+                                    labelText: "Raza",
+                                    counterText: '',
+                                  ),
+                                  style: const TextStyle(fontSize: 17),
+                                  maxLength: 18,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
+                                    ),
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Por favor ingresa una raza";
+                                    }
+                                    return null;
+                                  },
+                                ),
                               );
                             },
                           ),
+                          SizedBox(
+                            height: 50,
+                            child: TextFormField(
+                              controller: _colorController,
+                              decoration: const InputDecoration(
+                                labelText: "Color",
+                                counterText: '',
+                              ),
+                              style: TextStyle(fontSize: 17),
+                              maxLength: 25,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
+                              ],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor ingresa un color";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 50,
+                            child: DropdownButtonFormField<String>(
+                              value: selectedSize,
+                              decoration:
+                                  const InputDecoration(labelText: 'Tamaño'),
+                              items: sizes.map((String size) {
+                                return DropdownMenuItem<String>(
+                                  value: size,
+                                  child: Text(size),
+                                );
+                              }).toList(),
+                              onChanged: (String? newSize) {
+                                setState(() {
+                                  selectedSize = newSize;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor selecciona un tamaño";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 50,
+                            child: TextFormField(
+                              controller: _ageController,
+                              decoration: const InputDecoration(
+                                labelText: "Edad",
+                                counterText: '',
+                              ),
+                              style: TextStyle(fontSize: 17),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(2),
+                              ],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor ingresa una edad";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 50,
+                            child: DropdownButtonFormField<String>(
+                              value: selectedGender,
+                              decoration:
+                                  const InputDecoration(labelText: 'Sexo'),
+                              items: genders.map((String gender) {
+                                return DropdownMenuItem<String>(
+                                  value: gender,
+                                  child: Text(gender),
+                                );
+                              }).toList(),
+                              onChanged: (String? newGender) {
+                                setState(() {
+                                  selectedGender = newGender;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor selecciona el sexo";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 50,
+                            child: DropdownButtonFormField<String>(
+                              value: selectedTemperament,
+                              decoration: const InputDecoration(
+                                  labelText: 'Temperamento'),
+                              items: temperaments.map((String temperament) {
+                                return DropdownMenuItem<String>(
+                                  value: temperament,
+                                  child: Text(temperament),
+                                );
+                              }).toList(),
+                              onChanged: (String? newTemperament) {
+                                setState(() {
+                                  selectedTemperament = newTemperament;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Por favor selecciona el temperamento";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 50,
+                            child: TextFormField(
+                              controller: _vacuumController,
+                              decoration: const InputDecoration(
+                                labelText: "Vacunas",
+                                counterText: '',
+                              ),
+                              style: TextStyle(fontSize: 17),
+                              maxLength: 15,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
+                              ],
+                              onChanged: (value) {
+                                if (value.trim().isNotEmpty &&
+                                    value.contains(' ')) {
+                                  setState(() {
+                                    vaccines.add(value.trim());
+                                    _vacuumController.clear();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            children: vaccines.map((vaccine) {
+                              return Chip(
+                                label: Text(vaccine),
+                                deleteIcon: const Icon(Icons.close),
+                                onDeleted: () {
+                                  setState(() {
+                                    vaccines.remove(vaccine);
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          Row(
+                            children: [
+                              const Text("Pedigree:"),
+                              Checkbox(
+                                value: _hasPedigree,
+                                onChanged: (bool? value) {
+                                  setState(
+                                    () {
+                                      _hasPedigree = value ?? false;
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: ElevatedButton(
+                              onPressed: _addPet,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Color.fromARGB(255, 228, 121, 59),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text(
+                                "Agregar mascota",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontFamily: 'Nunito',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width,
-                        child: ElevatedButton(
-                          onPressed: _addPet,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 228, 121, 59),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                          ),
-                          child: const Text(
-                            "Agregar mascota",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-          if (_isLoading) LoadingOverlay(),
-        ],
-      ),
+        ),
+        if (_isLoading) LoadingOverlay(),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 final List<String> breedList = [
   'Dalmata',
+  'Mestizo',
   'Malix',
   'Schnauzer',
   'Pitbull',

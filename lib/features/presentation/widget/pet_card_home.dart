@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
 import 'package:furconnect/features/presentation/widget/send_request.dart';
 
 class PetCardHome extends StatelessWidget {
@@ -21,6 +21,8 @@ class PetCardHome extends StatelessWidget {
     if (images.isEmpty) {
       images.add('assets/images/placeholder/item_pet_placeholder.jpg');
     }
+    print(petData['_id']);
+    print(petData['usuario_id']['_id']);
 
     final PageController controller = PageController();
 
@@ -285,7 +287,9 @@ class PetCardHome extends StatelessWidget {
               );
             },
           ),
-          SendRequest(),
+          SendRequest(
+            petData: petData,
+          ),
         ],
       ),
     );

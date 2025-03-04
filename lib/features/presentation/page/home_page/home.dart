@@ -76,6 +76,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
 
     try {
       final newPets = await widget.petService.getPets(currentPage, 10);
+      if (!mounted) return;
       setState(() {
         pets.addAll(newPets);
         isLoading = false;
@@ -85,12 +86,13 @@ class __HomePageBodyState extends State<_HomePageBody> {
           currentPage++;
         }
       });
-    } catch (e) {
+    } catch (err) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
       AppOverlay.showOverlay(
-          context, Colors.red, "Error al registrar la mascota: $e");
+          context, Colors.red, "Error al cargar la mascota: $err");
     }
   }
 

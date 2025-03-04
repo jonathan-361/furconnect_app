@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:furconnect/features/data/services/register_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
+import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/data/services/request_service.dart';
 
 import 'package:furconnect/features/presentation/page/test_page/test.dart';
 import 'package:furconnect/features/presentation/page/login_page/login.dart';
@@ -97,7 +99,9 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/match',
-      builder: (context, state) => MatchPage(),
+      builder: (context, state) => MatchPage(
+          requestService:
+              RequestService(ApiService(), LoginService(ApiService()))),
     ),
   ],
 );

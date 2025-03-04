@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:furconnect/features/presentation/page/home_page/home.dart';
 import 'package:furconnect/features/presentation/page/chat_page/menu_chat.dart';
 import 'package:furconnect/features/presentation/page/pet_page/my_pets.dart';
 import 'package:furconnect/features/presentation/page/match_page/match.dart';
+import 'package:furconnect/features/data/services/api_service.dart';
+import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/data/services/request_service.dart';
 
 class BottonNavigationBarPage extends StatefulWidget {
   const BottonNavigationBarPage({super.key});
@@ -18,7 +22,9 @@ class _BottonNavigationBarPageState extends State<BottonNavigationBarPage> {
 
   final List<Widget> _pages = [
     HomePage(),
-    MatchPage(),
+    MatchPage(
+        requestService:
+            RequestService(ApiService(), LoginService(ApiService()))),
     MyPets(),
     MenuChat(),
   ];

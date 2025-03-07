@@ -5,20 +5,20 @@ import 'package:furconnect/features/data/services/request_service.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
 import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
 
-class MyItemRequestSend extends StatelessWidget {
+class MyItemReceiveRequest extends StatelessWidget {
   final Map<String, dynamic> petData;
-  final deleteButton;
+  final acceptButton;
+  final rejectButton;
   final String requestId;
   final RequestService requestService;
-  final VoidCallback onDelete;
 
-  const MyItemRequestSend({
+  const MyItemReceiveRequest({
     super.key,
     required this.petData,
-    required this.deleteButton,
+    required this.acceptButton,
+    required this.rejectButton,
     required this.requestId,
     required this.requestService,
-    required this.onDelete,
   });
 
   @override
@@ -67,10 +67,17 @@ class MyItemRequestSend extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildButton(
-                          text: deleteButton,
-                          onPressed: () {
-                            _deleteRequest(context);
-                          },
+                          text: acceptButton,
+                          onPressed: () {},
+                          buttonColor: Colors.green,
+                          buttonSize: _getResponsiveFontSize(context, 14),
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: _buildButton(
+                          text: rejectButton,
+                          onPressed: () {},
                           buttonColor: Colors.red,
                           buttonSize: _getResponsiveFontSize(context, 14),
                         ),
@@ -84,7 +91,7 @@ class MyItemRequestSend extends StatelessWidget {
         ),
         onTap: () => context.pushNamed('petCardHome', extra: {
           'petData': petData,
-          'source': 'requestSend',
+          'source': 'requestReceive',
           'requestId': requestId,
           'onDelete': () {
             print('codigo innecesariamente necesario');
@@ -92,18 +99,6 @@ class MyItemRequestSend extends StatelessWidget {
         }),
       ),
     );
-  }
-
-  void _deleteRequest(BuildContext context) async {
-    try {
-      onDelete();
-      await requestService.deleteRequest(requestId);
-      AppOverlay.showOverlay(
-          context, Colors.green, "Solicitud eliminada éxitosamente");
-    } catch (err) {
-      AppOverlay.showOverlay(
-          context, Colors.red, "Error al eliminar la solicitud: $err");
-    }
   }
 
   Widget _buildImage() {

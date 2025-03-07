@@ -5,6 +5,7 @@ import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
+import 'package:furconnect/features/data/services/request_service.dart';
 import 'package:furconnect/features/presentation/page/home_page/side_bar.dart';
 import 'package:furconnect/features/presentation/widget/overlay.dart';
 import 'package:furconnect/features/presentation/page/home_page//app_bar.dart';
@@ -97,15 +98,10 @@ class __HomePageBodyState extends State<_HomePageBody> {
   }
 
   void _onScroll() {
-    double currentScrollOffset = _scrollController.position.pixels;
-
-    if (currentScrollOffset == 0 &&
-        (_previousScrollOffset - currentScrollOffset).abs() >=
-            _scrollThreshold) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - _scrollThreshold) {
       _loadPets();
     }
-
-    _previousScrollOffset = currentScrollOffset;
   }
 
   Future<void> _refreshPets() async {
@@ -193,8 +189,14 @@ class __HomePageBodyState extends State<_HomePageBody> {
                             ? petData['media'][0]
                             : null,
                         name: petData['nombre'],
-                        onTap: () =>
-                            context.pushNamed('petCardHome', extra: petData),
+                        onTap: () => context.pushNamed('petCardHome', extra: {
+                          'petData': petData,
+                          'source': 'home',
+                          'requestId': petData['requestId'] ?? '',
+                          'onDelete': () {
+                            print('codigo innecesariamente necesario');
+                          },
+                        }),
                       );
                     } else {
                       return Center(

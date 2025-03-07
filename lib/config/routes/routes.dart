@@ -85,8 +85,14 @@ final router = GoRouter(
       path: '/petCardHome',
       name: 'petCardHome',
       builder: (context, state) {
-        final petData = state.extra as Map<String, dynamic>;
-        return PetCardHome(petData: petData);
+        final extraData = state.extra as Map<String, dynamic>;
+
+        return PetCardHome(
+          petData: extraData['petData'] as Map<String, dynamic>,
+          source: extraData['source'] as String,
+          requestId: extraData['requestId'] as String,
+          onDelete: extraData['onDelete'] as Function,
+        );
       },
     ),
     GoRoute(

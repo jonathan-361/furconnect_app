@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
 
 import 'package:furconnect/features/presentation/widget/send_request.dart';
+import 'package:furconnect/features/presentation/widget/request_button.dart';
+import 'package:furconnect/features/presentation/widget/receive_button.dart';
 
 class PetCardHome extends StatelessWidget {
   final Map<String, dynamic> petData;
+  final String source;
+  final String requestId;
+  final Function onDelete;
 
-  const PetCardHome({super.key, required this.petData});
+  const PetCardHome({
+    super.key,
+    required this.petData,
+    required this.source,
+    required this.requestId,
+    required this.onDelete,
+  });
 
   Widget _showPetImages(BuildContext context) {
+    print(requestId);
     List<String> images = [];
 
     if (petData['imagen'] != null && petData['imagen'].isNotEmpty) {
@@ -21,8 +33,6 @@ class PetCardHome extends StatelessWidget {
     if (images.isEmpty) {
       images.add('assets/images/placeholder/item_pet_placeholder.jpg');
     }
-    print(petData['_id']);
-    print(petData['usuario_id']['_id']);
 
     final PageController controller = PageController();
 
@@ -269,9 +279,11 @@ class PetCardHome extends StatelessWidget {
                                 ),
                                 Expanded(
                                   child: Text(
-                                    _formatWord(
-                                      petData['vacunas'].join(', '),
-                                    ),
+                                    petData['vacunas'] == null ||
+                                            petData['vacunas'].isEmpty
+                                        ? 'No tiene vacunas'
+                                        : _formatWord(
+                                            petData['vacunas'].join(', ')),
                                     style: TextStyle(fontSize: 18),
                                     softWrap: true,
                                   ),
@@ -287,9 +299,19 @@ class PetCardHome extends StatelessWidget {
               );
             },
           ),
-          SendRequest(
-            petData: petData,
-          ),
+          if (source == 'home') SendRequest(petData: petData),
+          if (source == 'requestSend')
+            RequestButton(
+              petData: petData,
+              requestId: requestId,
+              onDelete: onDelete,
+            ),
+          if (source == 'requestReceive')
+            ReceiveButton(
+              petData: petData,
+              requestId: requestId,
+              onDelete: onDelete,
+            ),
         ],
       ),
     );

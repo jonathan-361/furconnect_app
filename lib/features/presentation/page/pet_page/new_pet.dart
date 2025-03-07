@@ -23,6 +23,23 @@ class NewPet extends StatefulWidget {
   _NewPetState createState() => _NewPetState();
 }
 
+class MaxAgeInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    // Convertir el texto a un entero
+    final newText = newValue.text;
+    if (newText.isNotEmpty && int.tryParse(newText) != null) {
+      final int value = int.parse(newText);
+      // Si el valor es mayor que 25, no permitir que se ingrese
+      if (value > 25) {
+        return oldValue; // Retorna el valor anterior si es mayor a 25
+      }
+    }
+    return newValue; // Si está dentro del rango, permite la entrada
+  }
+}
+
 class _NewPetState extends State<NewPet> {
   final PetService _petService =
       PetService(ApiService(), LoginService(ApiService()));
@@ -50,207 +67,6 @@ class _NewPetState extends State<NewPet> {
 
   String petPlus = 'assets/images/svg/pet.svg';
   bool _isLoading = false;
-
-  void showLoadingOverlay() {
-    setState(() {
-      _isLoading = true;
-    });
-  }
-
-  void hideLoadingOverlay() {
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _pickFiles(int index) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
-
-    if (result != null) {
-      List<File> compressedImages = [];
-      for (var file in result.files) {
-        Uint8List compressedImageBytes = await _compressImage(File(file.path!));
-        final tempFile = File(
-            '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await tempFile.writeAsBytes(compressedImageBytes);
-        compressedImages.add(tempFile);
-      }
-
-      setState(() {
-        // Colocar las imágenes seleccionadas en las posiciones correspondientes
-        for (int i = 0; i < compressedImages.length && index + i < 4; i++) {
-          _selectedImages[index + i] = compressedImages[i];
-        }
-        _imageError = false;
-      });
-      print('Imágenes seleccionadas y comprimidas: ${_selectedImages.length}');
-    }
-  }
-
-  Future<Uint8List> _compressImage(File imageFile) async {
-    final image = img.decodeImage(await imageFile.readAsBytes())!;
-    final resizedImage = img.copyResize(image, width: 800);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
-
-    if (compressedImageBytes.length > 400 * 1024) {
-      return _compressImageWithLowerQuality(image);
-    }
-
-    return compressedImageBytes;
-  }
-
-  Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
-    final resizedImage = img.copyResize(image, width: 600);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
-    return compressedImageBytes;
-  }
-
-  Future<List<String>> uploadImagesDio(List<File> images) async {
-    List<String> uploadedUrls = [];
-
-    for (File image in images) {
-      try {
-        final formData = FormData.fromMap({
-          'file': await MultipartFile.fromBytes(
-            await image.readAsBytes(),
-            filename: 'image.jpg',
-          ),
-          'upload_preset': 'upload_image_flutter',
-        });
-
-        final response = await Dio().post(
-          'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
-          data: formData,
-        );
-
-        if (response.statusCode == 200) {
-          final imageUrl = response.data['secure_url'];
-          uploadedUrls.add(imageUrl);
-          print('URL de la imagen: $imageUrl');
-        } else {
-          print('Error al subir imagen: ${response.statusMessage}');
-        }
-      } catch (e) {
-        print('Excepción al subir imagen: $e');
-      }
-    }
-    return uploadedUrls;
-  }
-
-  Future<bool> _addPet() async {
-    final loginService = LoginService(ApiService());
-    await loginService.loadToken();
-    final token = loginService.authToken;
-    if (token == null) {
-      setState(() {
-        _error = 'No se encontró un token válido.';
-      });
-      return false;
-    }
-
-    final decodedToken = JwtDecoder.decode(token);
-    final usuarioId = decodedToken['id'];
-
-    if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedImages.isEmpty) {
-        setState(() {
-          _imageError = true;
-        });
-        AppOverlay.showOverlay(
-            context, Colors.red, "Debe seleccionar al menos una imagen.");
-        return false;
-      }
-
-      int agePet = int.parse(_ageController.text);
-
-      try {
-        if (_selectedImages.isNotEmpty) {
-          showLoadingOverlay();
-          List<File> nonNullImages = _selectedImages.whereType<File>().toList();
-          List<String> uploadedUrls = await uploadImagesDio(nonNullImages);
-
-          if (uploadedUrls.isNotEmpty) {
-            imagesPet = uploadedUrls;
-          } else {
-            setState(() {
-              _error = 'Error al subir imágenes.';
-            });
-            AppOverlay.showOverlay(
-                context, Colors.red, "Error al subir imágenes");
-            hideLoadingOverlay();
-            return false;
-          }
-        }
-
-        showLoadingOverlay();
-        String mainImage = imagesPet.isNotEmpty ? imagesPet.first : "";
-        List<String> mediaImages =
-            imagesPet.length > 1 ? imagesPet.sublist(1) : [];
-
-        final success = await _petService.addPet(
-          mainImage,
-          _nameController.text,
-          _breedController.text,
-          'Perro',
-          _colorController.text,
-          selectedSize ?? 'Tamaño desconocido',
-          agePet,
-          selectedGender ?? 'No definido aún',
-          _hasPedigree,
-          vaccines,
-          selectedTemperament ?? 'Temperamento desconocido',
-          usuarioId,
-          mediaImages,
-        );
-
-        if (success) {
-          AppOverlay.showOverlay(
-              context, Colors.green, "Mascota registrada con éxito");
-          hideLoadingOverlay();
-          print(_error);
-
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
-              context.pop();
-            }
-          });
-          return true;
-        } else {
-          setState(() {
-            _error = 'Error al registrar la mascota.';
-          });
-          AppOverlay.showOverlay(
-              context, Colors.red, "Error al registrar la mascota");
-          hideLoadingOverlay();
-          return false;
-        }
-      } on SocketException catch (_) {
-        setState(() {
-          _error = 'Error de conexión. Verifica tu conexión a internet.';
-          hideLoadingOverlay();
-        });
-        AppOverlay.showOverlay(
-            context, Colors.red, "Verifica tu conexión a internet.");
-        hideLoadingOverlay();
-        print(_error);
-        return false;
-      } catch (err) {
-        setState(() {
-          _error = 'Error al registrar la mascota: $err';
-        });
-        AppOverlay.showOverlay(
-            context, Colors.red, "Error al registrar la mascota: $err");
-        hideLoadingOverlay();
-        print(_error);
-        return false;
-      }
-    }
-
-    return false;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -468,10 +284,18 @@ class _NewPetState extends State<NewPet> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(2),
+                                MaxAgeInputFormatter(), // Usamos el nuevo formatter aquí
                               ],
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return "Por favor ingresa una edad";
+                                }
+                                final age = int.tryParse(value);
+                                if (age == null || age <= 0) {
+                                  return "Edad inválida";
+                                }
+                                if (age > 25) {
+                                  return "La edad no puede ser mayor de 25";
                                 }
                                 return null;
                               },
@@ -620,5 +444,206 @@ class _NewPetState extends State<NewPet> {
         if (_isLoading) LoadingOverlay(),
       ],
     );
+  }
+
+  void showLoadingOverlay() {
+    setState(() {
+      _isLoading = true;
+    });
+  }
+
+  void hideLoadingOverlay() {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _pickFiles(int index) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      List<File> compressedImages = [];
+      for (var file in result.files) {
+        Uint8List compressedImageBytes = await _compressImage(File(file.path!));
+        final tempFile = File(
+            '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await tempFile.writeAsBytes(compressedImageBytes);
+        compressedImages.add(tempFile);
+      }
+
+      setState(() {
+        // Colocar las imágenes seleccionadas en las posiciones correspondientes
+        for (int i = 0; i < compressedImages.length && index + i < 4; i++) {
+          _selectedImages[index + i] = compressedImages[i];
+        }
+        _imageError = false;
+      });
+      print('Imágenes seleccionadas y comprimidas: ${_selectedImages.length}');
+    }
+  }
+
+  Future<Uint8List> _compressImage(File imageFile) async {
+    final image = img.decodeImage(await imageFile.readAsBytes())!;
+    final resizedImage = img.copyResize(image, width: 800);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
+
+    if (compressedImageBytes.length > 400 * 1024) {
+      return _compressImageWithLowerQuality(image);
+    }
+
+    return compressedImageBytes;
+  }
+
+  Future<Uint8List> _compressImageWithLowerQuality(img.Image image) async {
+    final resizedImage = img.copyResize(image, width: 600);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
+    return compressedImageBytes;
+  }
+
+  Future<List<String>> uploadImagesDio(List<File> images) async {
+    List<String> uploadedUrls = [];
+
+    for (File image in images) {
+      try {
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromBytes(
+            await image.readAsBytes(),
+            filename: 'image.jpg',
+          ),
+          'upload_preset': 'upload_image_flutter',
+        });
+
+        final response = await Dio().post(
+          'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
+          data: formData,
+        );
+
+        if (response.statusCode == 200) {
+          final imageUrl = response.data['secure_url'];
+          uploadedUrls.add(imageUrl);
+          print('URL de la imagen: $imageUrl');
+        } else {
+          print('Error al subir imagen: ${response.statusMessage}');
+        }
+      } catch (e) {
+        print('Excepción al subir imagen: $e');
+      }
+    }
+    return uploadedUrls;
+  }
+
+  Future<bool> _addPet() async {
+    final loginService = LoginService(ApiService());
+    await loginService.loadToken();
+    final token = loginService.authToken;
+    if (token == null) {
+      setState(() {
+        _error = 'No se encontró un token válido.';
+      });
+      return false;
+    }
+
+    final decodedToken = JwtDecoder.decode(token);
+    final usuarioId = decodedToken['id'];
+
+    if (_formKey.currentState?.validate() ?? false) {
+      if (_selectedImages.isEmpty) {
+        setState(() {
+          _imageError = true;
+        });
+        AppOverlay.showOverlay(
+            context, Colors.red, "Debe seleccionar al menos una imagen.");
+        return false;
+      }
+
+      int agePet = int.parse(_ageController.text);
+
+      try {
+        if (_selectedImages.isNotEmpty) {
+          showLoadingOverlay();
+          List<File> nonNullImages = _selectedImages.whereType<File>().toList();
+          List<String> uploadedUrls = await uploadImagesDio(nonNullImages);
+
+          if (uploadedUrls.isNotEmpty) {
+            imagesPet = uploadedUrls;
+          } else {
+            setState(() {
+              _error = 'Error al subir imágenes.';
+            });
+            AppOverlay.showOverlay(
+                context, Colors.red, "Error al subir imágenes");
+            hideLoadingOverlay();
+            return false;
+          }
+        }
+
+        showLoadingOverlay();
+        String mainImage = imagesPet.isNotEmpty ? imagesPet.first : "";
+        List<String> mediaImages =
+            imagesPet.length > 1 ? imagesPet.sublist(1) : [];
+
+        final success = await _petService.addPet(
+          mainImage,
+          _nameController.text,
+          _breedController.text,
+          'Perro',
+          _colorController.text,
+          selectedSize ?? 'Tamaño desconocido',
+          agePet,
+          selectedGender ?? 'No definido aún',
+          _hasPedigree,
+          vaccines,
+          selectedTemperament ?? 'Temperamento desconocido',
+          usuarioId,
+          mediaImages,
+        );
+
+        if (success) {
+          AppOverlay.showOverlay(
+              context, Colors.green, "Mascota registrada con éxito");
+          hideLoadingOverlay();
+          print(_error);
+
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              context.pop();
+            }
+          });
+          return true;
+        } else {
+          setState(() {
+            _error = 'Error al registrar la mascota.';
+          });
+          AppOverlay.showOverlay(
+              context, Colors.red, "Error al registrar la mascota");
+          hideLoadingOverlay();
+          return false;
+        }
+      } on SocketException catch (_) {
+        setState(() {
+          _error = 'Error de conexión. Verifica tu conexión a internet.';
+          hideLoadingOverlay();
+        });
+        AppOverlay.showOverlay(
+            context, Colors.red, "Verifica tu conexión a internet.");
+        hideLoadingOverlay();
+        print(_error);
+        return false;
+      } catch (err) {
+        setState(() {
+          _error = 'Error al registrar la mascota: $err';
+        });
+        AppOverlay.showOverlay(
+            context, Colors.red, "Error al registrar la mascota: $err");
+        hideLoadingOverlay();
+        print(_error);
+        return false;
+      }
+    }
+
+    return false;
   }
 }

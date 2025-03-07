@@ -48,6 +48,50 @@ class PetService {
     }
   }
 
+  Future<List<dynamic>?> getPetsFilter(
+    int page,
+    int limit,
+    String raza,
+    String sexo,
+  ) async {
+    final token = await _loginService.getToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    try {
+      final response = await _apiService.get(
+        '/pets/search',
+        queryParams: {'page': page, 'limit': limit, 'raza': raza, 'sexo': sexo},
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data is Map<String, dynamic> &&
+            response.data['pets'] != null) {
+          return List.from(response.data['pets']);
+        } else if (response.data is List<dynamic>) {
+          return response.data;
+        } else {
+          throw Exception("La respuesta no contiene una lista de mascotas.");
+        }
+      } else if (response.statusCode == 204) {
+        throw ("No tienes mascotas todavía");
+      } else {
+        throw Exception("Error al obtener las mascotas.");
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception("No tienes mascotas todavía");
+      } else {
+        throw Exception("Error en la solicitud: ${e.message}");
+      }
+    }
+  }
+
   Future<Map<String, dynamic>?> getPetById(String petId) async {
     final token = await _loginService.getToken();
 
@@ -99,11 +143,11 @@ class PetService {
       } else {
         throw Exception("Error al obtener las mascotas.");
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+    } on DioException catch (err) {
+      if (err.response?.statusCode == 404) {
         throw Exception("No tienes mascotas todavía");
       } else {
-        throw Exception("Error en la solicitud: ${e.message}");
+        throw Exception("Error en la solicitud: ${err.message}");
       }
     }
   }
@@ -159,8 +203,8 @@ class PetService {
         throw Exception(
             "Error al agregar la mascota: ${response.statusMessage}");
       }
-    } on DioException catch (e) {
-      throw Exception("Error en la solicitud: ${e.message}");
+    } on DioException catch (err) {
+      throw Exception("Error en la solicitud: ${err.message}");
     }
   }
 
@@ -213,8 +257,8 @@ class PetService {
         throw Exception(
             "Error al actualizar la mascota: ${response.statusMessage}");
       }
-    } on DioException catch (e) {
-      throw Exception("Error en la solicitud: ${e.message}");
+    } on DioException catch (err) {
+      throw Exception("Error en la solicitud: ${err.message}");
     }
   }
 
@@ -240,8 +284,8 @@ class PetService {
         throw Exception(
             "Error al eliminar la mascota: ${response.statusMessage}");
       }
-    } on DioException catch (e) {
-      throw Exception("Error en la solicitud: ${e.message}");
+    } on DioException catch (err) {
+      throw Exception("Error en la solicitud: ${err.message}");
     }
   }
 }

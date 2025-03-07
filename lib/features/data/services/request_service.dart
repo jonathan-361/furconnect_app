@@ -31,13 +31,48 @@ class RequestService {
           return response.data;
         }
       } else if (response.statusCode == 204) {
-        throw ("No tienes mascotas todavía");
+        throw ("No tienes solicitudes todavía");
       } else {
-        throw Exception("Error al obtener las mascotas.");
+        throw Exception("Error al obtener las solicitudes.");
+      }
+    } on DioException catch (err) {
+      if (err.response?.statusCode == 404) {
+        throw Exception("No tienes solicitudes todavía");
+      } else {
+        throw Exception("Error en la solicitud: ${err.message}");
+      }
+    }
+  }
+
+  Future<List<dynamic>> getReceiveRequest() async {
+    final token = await _loginService.getToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+
+    try {
+      final response = await _apiService.get(
+        '/solicitudes/recibidas',
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data.isEmpty) {
+          return [];
+        } else {
+          return response.data;
+        }
+      } else if (response.statusCode == 204) {
+        throw ("No tienes solicitudes todavía");
+      } else {
+        throw Exception("Error al obtener las solicitudes.");
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        throw Exception("No tienes mascotas todavía");
+        throw Exception("No tienes solicitudes todavía");
       } else {
         throw Exception("Error en la solicitud: ${e.message}");
       }

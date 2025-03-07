@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furconnect/features/data/services/request_service.dart';
 import 'package:furconnect/features/presentation/widget/item_request_pet.dart';
 import 'package:furconnect/features/presentation/widget/my_item_request_send.dart';
+import 'package:furconnect/features/presentation/widget/my_item_receive_request.dart';
 import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
 
 class MatchPage extends StatefulWidget {
@@ -15,12 +16,14 @@ class MatchPage extends StatefulWidget {
 
 class _MatchPageState extends State<MatchPage> {
   List<dynamic> sendRequests = [];
+  List<dynamic> receiveRequest = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadSendRequest();
+    _loadReceiveRequest();
   }
 
   @override
@@ -50,31 +53,19 @@ class _MatchPageState extends State<MatchPage> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      ListView(
+                      ListView.builder(
                         padding: EdgeInsets.all(8),
-                        children: [
-                          ItemRequestPet(
-                            nombre: '',
-                            raza: '',
-                            imagenUrl: '',
-                            firstTextButton: 'Aceptar',
-                            secondTextButton: 'Rechazar',
-                          ),
-                          ItemRequestPet(
-                            nombre: '',
-                            raza: '',
-                            imagenUrl: '',
-                            firstTextButton: 'Aceptar',
-                            secondTextButton: 'Rechazar',
-                          ),
-                          ItemRequestPet(
-                            nombre: '',
-                            raza: '',
-                            imagenUrl: '',
-                            firstTextButton: 'Aceptar',
-                            secondTextButton: 'Rechazar',
-                          ),
-                        ],
+                        itemCount: receiveRequest.length,
+                        itemBuilder: (context, index) {
+                          var request = receiveRequest[index];
+                          return MyItemReceiveRequest(
+                            petData: request['mascota_solicitante_id'],
+                            acceptButton: 'Aceptar',
+                            rejectButton: 'Rechazar',
+                            requestId: request['_id'].toString(),
+                            requestService: widget.requestService,
+                          );
+                        },
                       ),
                       ListView.builder(
                         padding: EdgeInsets.all(8),
@@ -82,11 +73,7 @@ class _MatchPageState extends State<MatchPage> {
                         itemBuilder: (context, index) {
                           var request = sendRequests[index];
                           return MyItemRequestSend(
-                            nombre: request['mascota_solicitado_id']['nombre'],
-                            raza: request['mascota_solicitado_id']['raza'],
-                            imagenUrl: request['mascota_solicitado_id']
-                                    ['imagen'] ??
-                                '',
+                            petData: request['mascota_solicitante_id'],
                             deleteButton: 'Borrar solicitud',
                             requestId: request['_id'].toString(),
                             requestService: widget.requestService,
@@ -129,18 +116,33 @@ class _MatchPageState extends State<MatchPage> {
     showLoadingOverlay();
     try {
       final requests = await widget.requestService.getSendRequest();
-
-      // Filtramos las solicitudes que tienen estado 'pendiente'
       final pendingRequests = requests
           .where((request) => request['estado'] == 'pendiente')
           .toList();
 
       setState(() {
-        sendRequests =
-            pendingRequests; // Actualizamos la lista con solo las solicitudes pendientes
+        sendRequests = pendingRequests;
       });
 
-      // Para pruebas, muestra la información de las solicitudes pendientes
+      hideLoadingOverlay();
+    } catch (err) {
+      hideLoadingOverlay();
+      print("Error al cargar solicitudes enviadas: $err");
+    }
+  }
+
+  Future<void> _loadReceiveRequest() async {
+    showLoadingOverlay();
+    try {
+      final requests = await widget.requestService.getReceiveRequest();
+      final pendingRequests = requests
+          .where((request) => request['estado'] == 'pendiente')
+          .toList();
+
+      setState(() {
+        receiveRequest = pendingRequests;
+      });
+
       for (var request in pendingRequests) {
         print(
             "Nombre de la mascota solicitada: ${request['mascota_solicitado_id']['nombre']}");
@@ -151,7 +153,7 @@ class _MatchPageState extends State<MatchPage> {
       hideLoadingOverlay();
     } catch (err) {
       hideLoadingOverlay();
-      print("Error al cargar solicitudes enviadas: $err");
+      print("Error al cargar solicitudes recibidas: $err");
     }
   }
 }

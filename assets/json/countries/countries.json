@@ -1,556 +1,645 @@
 {
-    "country": {
-      "name": "México",
-      "code": "MX",
-      "states": [
-        {
-    "name": "Aguascalientes",
-    "code": "AGS",
-    "cities": [
-      "Aguascalientes",
-      "Calvillo",
-      "Rincón de Romos",
-      "Jesús María",
-      "Pabellón de Arteaga",
-      "Asientos",
-      "Cosío",
-      "El Llano",
-      "San José de Gracia",
-      "Tepezalá",
-      "San Francisco de los Romo",
-      "Nochistlán",
-      "Villa Juárez",
-      "Los Arellano",
-      "Palo Alto"
-    ]
-  },
-        {
-    "name": "Baja California",
-    "code": "BC",
-    "cities": [
-      "Mexicali",
-      "Tijuana",
-      "Ensenada",
-      "Playas del Rosarito",
-      "Tecate",
-      "Playas de Rosarito",
-      "San Felipe",
-      "Imperial",
-      "Pescadero",
-      "Valle de Guadalupe",
-      "San Quintín",
-      "Santo Tomás",
-      "Ojos Negros",
-      "La Misión",
-      "El Hongo",
-      "El Centinela",
-      "La Rumorosa"
-    ]
-  },
-    {
-      "name": "Baja California Sur",
-      "code": "BCS",
-      "cities": [
-        "La Paz",
-        "Los Cabos",
-        "Comondú",
-        "Loreto",
-        "Mulegé",
-        "Santa Rosalía",
-        "San José del Cabo",
-        "La Ventana",
-        "El Triunfo",
-        "Todos Santos",
-        "Miraflores",
-        "Santiago"
-      ]
-    },
-    {
-      "name": "Campeche",
-      "code": "CAMP",
-      "cities": [
-        "Campeche",
-        "Ciudad del Carmen",
-        "Champotón",
-        "Escárcega",
-        "Hecelchakán",
-        "Calkiní",
-        "Tenabo",
-        "Palizada",
-        "Hopelchén",
-        "Xpujil"
-      ]
-    },
-    {
-      "name": "Chiapas",
-      "code": "CHP",
-      "cities": [
-        "Tuxtla Gutiérrez",
-        "San Cristóbal de las Casas",
-        "Tapachula",
-        "Comitán",
-        "Palenque",
-        "Huehuetán",
-        "Chiapas de Corzo",
-        "Cintalapa",
-        "Tonala",
-        "Ocosingo",
-        "Las Margaritas",
-        "Arriaga",
-        "Villaflores",
-        "La Trinitaria"
-      ]
-    },
-    {
-      "name": "Chihuahua",
-      "code": "CHIH",
-      "cities": [
-        "Chihuahua",
-        "Ciudad Juárez",
-        "Delicias",
-        "Hidalgo del Parral",
-        "Cuauhtémoc",
-        "Chihuahua",
-        "Jiménez",
-        "Nuevo Casas Grandes",
-        "Rosales",
-        "Madera",
-        "Saucillo",
-        "Ojinaga",
-        "Ahumada",
-        "Bocoyna"
-      ]
-    },
-
-    {
-      "name": "Coahuila",
-      "code": "COAH",
-      "cities": [
-        "Saltillo",
-        "Torreón",
-        "Monclova",
-        "Piedras Negras",
-        "Acuña",
-        "San Pedro",
-        "Francisco I. Madero",
-        "Frontera",
-        "Ramos Arizpe",
-        "Sabinas",
-        "Nadadores",
-        "Múzquiz",
-        "La Laguna"
-      ]
-    },
-    {
-      "name": "Colima",
-      "code": "COL",
-      "cities": [
-        "Colima",
-        "Manzanillo",
-        "Tecomán",
-        "Villa de Álvarez",
-        "Comala",
-        "Armería",
-        "Cuauhtémoc",
-        "Coquimatlán",
-        "Minatitlán",
-        "Ixtlahuacán"
-      ]
-    },
-    {
-      "name": "Durango",
-      "code": "DGO",
-      "cities": [
-        "Durango",
-        "Gómez Palacio",
-        "Lerdo",
-        "Santiago Papasquiaro",
-        "Vicente Guerrero",
-        "Pánuco de Coronado",
-        "Canatlán",
-        "Nombre de Dios",
-        "El Oro",
-        "Mapimí",
-        "Nazas"
-      ]
-    },
-    {
-      "name": "Guanajuato",
-      "code": "GTO",
-      "cities": [
-        "León",
-        "Irapuato",
-        "Celaya",
-        "Salamanca",
-        "Guanajuato",
-        "San Miguel de Allende",
-        "Silao",
-        "Dolores Hidalgo",
-        "Comonfort",
-        "Pénjamo",
-        "Moroleón",
-        "Acámbaro",
-        "Cortazar",
-        "Villagrán"
-      ]
-    },
-    {
-      "name": "Guerrero",
-      "code": "GRO",
-      "cities": [
-        "Acapulco",
-        "Chilpancingo",
-        "Zihuatanejo",
-        "Iguala",
-        "Taxco",
-        "Ayutla de los Libres",
-        "Coyuca de Benítez",
-        "Petatlán",
-        "Tixtla de Guerrero",
-        "San Luis Acatlán",
-        "Ometepec",
-        "Chilapa de Álvarez",
-        "Tlalchapa"
-      ]
-    },
-    {
-      "name": "Hidalgo",
-      "code": "HGO",
-      "cities": [
-        "Pachuca",
-        "Tulancingo",
-        "Tula de Allende",
-        "Ixmiquilpan",
-        "Actopan",
-        "Tepeji del Río",
-        "Huejutla de Reyes",
-        "Zimapán",
-        "Atotonilco el Grande",
-        "Mineral de la Reforma",
-        "San Felipe Orizatlán"
-      ]
-    },
-    {
-      "name": "Jalisco",
-      "code": "JAL",
-      "cities": [
-        "Guadalajara",
-        "Zapopan",
-        "Tlaquepaque",
-        "Tonalá",
-        "Puerto Vallarta",
-        "Tlajomulco de Zúñiga",
-        "La Barca",
-        "Lagos de Moreno",
-        "Colotlán",
-        "Puerto Vallarta",
-        "Ameca",
-        "Arandas",
-        "Ocotlán",
-        "Cihuatlán"
-      ]
-    },
-    {
-      "name": "México",
-      "code": "MEX",
-      "cities": [
-        "Toluca",
-        "Ecatepec",
-        "Nezahualcóyotl",
-        "Naucalpan",
-        "Tlalnepantla",
-        "Chimalhuacán",
-        "Valle de Chalco",
-        "La Paz",
-        "Ixtapaluca",
-        "Atizapán de Zaragoza",
-        "Cuautitlán Izcalli",
-        "Huixquilucan",
-        "Coacalco",
-        "Metepec"
-      ]
-    },
-
-    {
-      "name": "Michoacán",
-      "code": "MICH",
-      "cities": [
-        "Morelia",
-        "Uruapan",
-        "Zamora",
-        "Apatzingán",
-        "La Piedad",
-        "Lázaro Cárdenas",
-        "Pátzcuaro",
-        "Zitácuaro",
-        "Los Reyes",
-        "Jiquilpan",
-        "Tacámbaro",
-        "Parácuaro"
-      ]
-    },
-    {
-      "name": "Morelos",
-      "code": "MOR",
-      "cities": [
-        "Cuernavaca",
-        "Jiutepec",
-        "Cuautla",
-        "Temixco",
-        "Yautepec",
-        "Tepoztlán",
-        "Emiliano Zapata",
-        "Axochiapan",
-        "Jojutla",
-        "Xochitepec",
-        "Amacuzac"
-      ]
-    },
-    {
-      "name": "Nayarit",
-      "code": "NAY",
-      "cities": [
-        "Tepic",
-        "Bahía de Banderas",
-        "Compostela",
-        "Santiago Ixcuintla",
-        "Xalisco",
-        "Acaponeta",
-        "Santa María del Oro",
-        "Ixtlán del Río",
-        "San Blas",
-        "Tuxpan"
-      ]
-    },
-    {
-      "name": "Nuevo León",
-      "code": "NL",
-      "cities": [
-        "Monterrey",
-        "San Nicolás de los Garza",
-        "Guadalupe",
-        "Apodaca",
-        "Santa Catarina",
-        "Escobedo",
-        "Santiago",
-        "Juárez",
-        "Cadereyta Jiménez",
-        "General Escobedo",
-        "Linares"
-      ]
-    },
-    {
-      "name": "Oaxaca",
-      "code": "OAX",
-      "cities": [
-        "Oaxaca de Juárez",
-        "Salina Cruz",
-        "Juchitán",
-        "Tuxtepec",
-        "Puerto Escondido",
-        "Santa Cruz Xoxocotlán",
-        "San Juan Bautista Tuxtepec",
-        "Villa de Etla",
-        "Zimatlán de Álvarez",
-        "Asunción Nochixtlán",
-        "Tlacolula de Matamoros"
-      ]
-    },
-    {
-      "name": "Puebla",
-      "code": "PUE",
-      "cities": [
-        "Puebla",
-        "Tehuacán",
-        "Atlixco",
-        "San Martín Texmelucan",
-        "Cholula",
-        "Huejotzingo",
-        "Libres",
-        "Amozoc",
-        "Izúcar de Matamoros",
-        "Tlatlauquitepec",
-        "Zaragoza"
-      ]
-    },
-    {
-      "name": "Querétaro",
-      "code": "QRO",
-      "cities": [
-        "Querétaro",
-        "San Juan del Río",
-        "Corregidora",
-        "El Marqués",
-        "Cadereyta",
-        "Peñamiller",
-        "Amealco",
-        "El Colorado",
-        "Tequisquiapan",
-        "Tolimán"
-      ]
-    },
-    {
-      "name": "Quintana Roo",
-      "code": "QROO",
-      "cities": [
-        "Cancún",
-        "Playa del Carmen",
-        "Chetumal",
-        "Cozumel",
-        "Tulum",
-        "Felipe Carrillo Puerto",
-        "José María Morelos",
-        "Bacalar",
-        "Isla Mujeres",
-        "Lázaro Cárdenas"
-      ]
-    },
-    {
-      "name": "San Luis Potosí",
-      "code": "SLP",
-      "cities": [
-        "San Luis Potosí",
-        "Soledad de Graciano Sánchez",
-        "Matehuala",
-        "Ciudad Valles",
-        "Tamazunchale",
-        "Rioverde",
-        "Cerritos",
-        "Salinas",
-        "Xilitla",
-        "Tamuín"
-      ]
-    },
-    {
-      "name": "Sinaloa",
-      "code": "SIN",
-      "cities": [
-        "Culiacán",
-        "Mazatlán",
-        "Los Mochis",
-        "Guasave",
-        "Navolato",
-        "Ahome",
-        "El Fuerte",
-        "Badiraguato",
-        "Escuinapa",
-        "Salvador Alvarado"
-      ]
-    },
-    {
-      "name": "Sonora",
-      "code": "SON",
-      "cities": [
-        "Hermosillo",
-        "Ciudad Obregón",
-        "Nogales",
-        "San Luis Río Colorado",
-        "Guaymas",
-        "Navojoa",
-        "Cajeme",
-        "San Ignacio Río Muerto",
-        "Empalme",
-        "Huatabampo"
-      ]
-    },
-    {
-      "name": "Tabasco",
-      "code": "TAB",
-      "cities": [
-        "Villahermosa",
-        "Cárdenas",
-        "Comalcalco",
-        "Macuspana",
-        "Tenosique",
-        "Paraíso",
-        "Balancán",
-        "Centro",
-        "Nacajuca",
-        "Jalpa de Méndez"
-      ]
-    },
-    {
-      "name": "Tamaulipas",
-      "code": "TAM",
-      "cities": [
-        "Ciudad Victoria",
-        "Tampico",
-        "Reynosa",
-        "Matamoros",
-        "Nuevo Laredo",
-        "Mante",
-        "Altamira",
-        "Victoria",
-        "San Fernando",
-        "El Mante"
-      ]
-    },
-    {
-      "name": "Tlaxcala",
-      "code": "TLAX",
-      "cities": [
-        "Tlaxcala",
-        "Apizaco",
-        "Huamantla",
-        "Chiautempan",
-        "Calpulalpan",
-        "San Pablo del Monte",
-        "Zitlaltepec",
-        "Totolac",
-        "Panotla",
-        "Amaxac de Guerrero"
-      ]
-    },
-    {
-      "name": "Veracruz",
-      "code": "VER",
-      "cities": [
-        "Xalapa",
-        "Veracruz",
-        "Coatzacoalcos",
-        "Córdoba",
-        "Poza Rica",
-        "Minatitlán",
-        "Orizaba",
-        "Boca del Río",
-        "Tuxpan",
-        "San Andrés Tuxtla",
-        "Cazones de Herrera"
-      ]
-    },
-         {
-      "name": "Yucatán",
-      "code": "YUC",
-      "cities": [
-        "Mérida",
-        "Valladolid",
-        "Progreso",
-        "Tizimín",
-        "Motul",
-        "Izamal",
-        "Celestún",
-        "Muna",
-        "Tecoh",
-        "Hunucmá"
-      ]
-    },
-    {
+  "country": {
+    "name": "México",
+    "code": "MX",
+    "states": [
+      {
+        "name": "Aguascalientes",
+        "code": "AGS",
+        "cities": [
+          "Aguascalientes",
+          "Asientos",
+          "Calvillo",
+          "Cosío",
+          "El Llano",
+          "Jesús María",
+          "Los Arellano",
+          "Nochistlán",
+          "Pabellón de Arteaga",
+          "Palo Alto",
+          "Rincón de Romos",
+          "San Francisco de los Romo",
+          "San José de Gracia",
+          "Tepezalá",
+          "Villa Juárez"
+        ]
+      },
+      {
+        "name": "Baja California",
+        "code": "BC",
+        "cities": [
+          "El Centinela",
+          "El Hongo",
+          "Ensenada",
+          "Imperial",
+          "La Misión",
+          "La Rumorosa",
+          "Mexicali",
+          "Ojos Negros",
+          "Pescadero",
+          "Playas de Rosarito",
+          "Playas del Rosarito",
+          "San Felipe",
+          "San Quintín",
+          "Santo Tomás",
+          "Tecate",
+          "Tijuana",
+          "Valle de Guadalupe"
+        ]
+      },
+      {
+        "name": "Baja California Sur",
+        "code": "BCS",
+        "cities": [
+          "Comondú",
+          "El Triunfo",
+          "La Paz",
+          "La Ventana",
+          "Loreto",
+          "Los Cabos",
+          "Miraflores",
+          "Mulegé",
+          "San José del Cabo",
+          "Santa Rosalía",
+          "Santiago",
+          "Todos Santos"
+        ]
+      },
+      {
+        "name": "Campeche",
+        "code": "CAMP",
+        "cities": [
+          "Calkiní",
+          "Campeche",
+          "Champotón",
+          "Ciudad del Carmen",
+          "Escárcega",
+          "Hecelchakán",
+          "Hopelchén",
+          "Palizada",
+          "Tenabo",
+          "Xpujil"
+        ]
+      },
+      {
+        "name": "Chiapas",
+        "code": "CHP",
+        "cities": [
+          "Arriaga",
+          "Chiapas de Corzo",
+          "Cintalapa",
+          "Comitán",
+          "Huehuetán",
+          "La Trinitaria",
+          "Las Margaritas",
+          "Ocosingo",
+          "Palenque",
+          "San Cristóbal de las Casas",
+          "Tapachula",
+          "Tonala",
+          "Tuxtla Gutiérrez",
+          "Villaflores"
+        ]
+      },
+      {
+        "name": "Chihuahua",
+        "code": "CHIH",
+        "cities": [
+          "Ahumada",
+          "Bocoyna",
+          "Chihuahua",
+          "Cuauhtémoc",
+          "Delicias",
+          "Hidalgo del Parral",
+          "Jiménez",
+          "Madera",
+          "Nuevo Casas Grandes",
+          "Ojinaga",
+          "Rosales",
+          "Saucillo"
+        ]
+      },
+      {
+        "name": "Coahuila",
+        "code": "COAH",
+        "cities": [
+          "Acuña",
+          "Francisco I. Madero",
+          "Frontera",
+          "La Laguna",
+          "Monclova",
+          "Múzquiz",
+          "Nadadores",
+          "Piedras Negras",
+          "Ramos Arizpe",
+          "Sabinas",
+          "Saltillo",
+          "San Pedro",
+          "Torreón"
+        ]
+      },
+      {
+        "name": "Colima",
+        "code": "COL",
+        "cities": [
+          "Armería",
+          "Colima",
+          "Comala",
+          "Coquimatlán",
+          "Cuauhtémoc",
+          "Ixtlahuacán",
+          "Manzanillo",
+          "Minatitlán",
+          "Tecomán",
+          "Villa de Álvarez"
+        ]
+      },
+      {
+        "name": "Durango",
+        "code": "DGO",
+        "cities": [
+          "Canatlán",
+          "Durango",
+          "El Oro",
+          "Gómez Palacio",
+          "Lerdo",
+          "Mapimí",
+          "Nazas",
+          "Nombre de Dios",
+          "Pánuco de Coronado",
+          "Santiago Papasquiaro",
+          "Vicente Guerrero"
+        ]
+      },
+      {
+        "name": "Guanajuato",
+        "code": "GTO",
+        "cities": [
+          "Acámbaro",
+          "Celaya",
+          "Comonfort",
+          "Cortazar",
+          "Dolores Hidalgo",
+          "Guanajuato",
+          "Irapuato",
+          "León",
+          "Moroleón",
+          "Pénjamo",
+          "Salamanca",
+          "San Miguel de Allende",
+          "Silao",
+          "Villagrán"
+        ]
+      },
+      {
+        "name": "Guerrero",
+        "code": "GRO",
+        "cities": [
+          "Acapulco",
+          "Ayutla de los Libres",
+          "Chilapa de Álvarez",
+          "Chilpancingo",
+          "Coyuca de Benítez",
+          "Iguala",
+          "Ometepec",
+          "Petatlán",
+          "San Luis Acatlán",
+          "Taxco",
+          "Tixtla de Guerrero",
+          "Tlalchapa",
+          "Zihuatanejo"
+        ]
+      },
+      {
+        "name": "Hidalgo",
+        "code": "HGO",
+        "cities": [
+          "Actopan",
+          "Atotonilco el Grande",
+          "Huejutla de Reyes",
+          "Ixmiquilpan",
+          "Mineral de la Reforma",
+          "Pachuca",
+          "San Felipe Orizatlán",
+          "Tepeji del Río",
+          "Tula de Allende",
+          "Tulancingo",
+          "Zimapán"
+        ]
+      },
+      {
+        "name": "Jalisco",
+        "code": "JAL",
+        "cities": [
+          "Ameca",
+          "Arandas",
+          "Cihuatlán",
+          "Colotlán",
+          "Guadalajara",
+          "La Barca",
+          "Lagos de Moreno",
+          "Ocotlán",
+          "Puerto Vallarta",
+          "Tlaquepaque",
+          "Tlajomulco de Zúñiga",
+          "Tonalá",
+          "Zapopan"
+        ]
+      },
+      {
+        "name": "México",
+        "code": "MEX",
+        "cities": [
+          "Atizapán de Zaragoza",
+          "Chimalhuacán",
+          "Coacalco",
+          "Cuautitlán Izcalli",
+          "Ecatepec",
+          "Huixquilucan",
+          "Ixtapaluca",
+          "La Paz",
+          "Metepec",
+          "Naucalpan",
+          "Nezahualcóyotl",
+          "Tlalnepantla",
+          "Toluca",
+          "Valle de Chalco"
+        ]
+      },
+      {
+        "name": "Michoacán",
+        "code": "MICH",
+        "cities": [
+          "Apatzingán",
+          "Jiquilpan",
+          "La Piedad",
+          "Lázaro Cárdenas",
+          "Los Reyes",
+          "Morelia",
+          "Parácuaro",
+          "Pátzcuaro",
+          "Tacámbaro",
+          "Uruapan",
+          "Zamora",
+          "Zitácuaro"
+        ]
+      },
+      {
+        "name": "Morelos",
+        "code": "MOR",
+        "cities": [
+          "Amacuzac",
+          "Axochiapan",
+          "Cuautla",
+          "Cuernavaca",
+          "Emiliano Zapata",
+          "Jiutepec",
+          "Jojutla",
+          "Temixco",
+          "Tepoztlán",
+          "Xochitepec",
+          "Yautepec"
+        ]
+      },
+      {
+        "name": "Nayarit",
+        "code": "NAY",
+        "cities": [
+          "Acaponeta",
+          "Bahía de Banderas",
+          "Compostela",
+          "Ixtlán del Río",
+          "San Blas",
+          "Santa María del Oro",
+          "Santiago Ixcuintla",
+          "Tepic",
+          "Tuxpan",
+          "Xalisco"
+        ]
+      },
+      {
+        "name": "Nuevo León",
+        "code": "NL",
+        "cities": [
+          "Apodaca",
+          "Cadereyta Jiménez",
+          "Escobedo",
+          "General Escobedo",
+          "Guadalupe",
+          "Juárez",
+          "Linares",
+          "Monterrey",
+          "San Nicolás de los Garza",
+          "Santa Catarina",
+          "Santiago"
+        ]
+      },
+      {
+        "name": "Oaxaca",
+        "code": "OAX",
+        "cities": [
+          "Asunción Nochixtlán",
+          "Juchitán",
+          "Oaxaca de Juárez",
+          "Puerto Escondido",
+          "Salina Cruz",
+          "San Juan Bautista Tuxtepec",
+          "Santa Cruz Xoxocotlán",
+          "Tlacolula de Matamoros",
+          "Tuxtepec",
+          "Villa de Etla",
+          "Zimatlán de Álvarez"
+        ]
+      },
+      {
+        "name": "Puebla",
+        "code": "PUE",
+        "cities": [
+          "Amozoc",
+          "Atlixco",
+          "Cholula",
+          "Huejotzingo",
+          "Izúcar de Matamoros",
+          "Libres",
+          "Puebla",
+          "San Martín Texmelucan",
+          "Tehuacán",
+          "Tlatlauquitepec",
+          "Zaragoza"
+        ]
+      },
+      {
+        "name": "Querétaro",
+        "code": "QRO",
+        "cities": [
+          "Amealco",
+          "Cadereyta",
+          "Corregidora",
+          "El Colorado",
+          "El Marqués",
+          "Peñamiller",
+          "Querétaro",
+          "San Juan del Río",
+          "Tequisquiapan",
+          "Tolimán"
+        ]
+      },
+      {
+        "name": "Quintana Roo",
+        "code": "QROO",
+        "cities": [
+          "Bacalar",
+          "Cancún",
+          "Chetumal",
+          "Cozumel",
+          "Felipe Carrillo Puerto",
+          "Isla Mujeres",
+          "José María Morelos",
+          "Lázaro Cárdenas",
+          "Playa del Carmen",
+          "Tulum"
+        ]
+      },
+      {
+        "name": "San Luis Potosí",
+        "code": "SLP",
+        "cities": [
+          "Cerritos",
+          "Ciudad Valles",
+          "Matehuala",
+          "Rioverde",
+          "Salinas",
+          "San Luis Potosí",
+          "Soledad de Graciano Sánchez",
+          "Tamuín",
+          "Tamazunchale",
+          "Xilitla"
+        ]
+      },
+      {
+        "name": "Sinaloa",
+        "code": "SIN",
+        "cities": [
+          "Ahome",
+          "Badiraguato",
+          "Culiacán",
+          "El Fuerte",
+          "Escuinapa",
+          "Guasave",
+          "Los Mochis",
+          "Mazatlán",
+          "Navolato",
+          "Salvador Alvarado"
+        ]
+      },
+      {
+        "name": "Sonora",
+        "code": "SON",
+        "cities": [
+          "Cajeme",
+          "Ciudad Obregón",
+          "Empalme",
+          "Guaymas",
+          "Hermosillo",
+          "Huatabampo",
+          "Navojoa",
+          "Nogales",
+          "San Ignacio Río Muerto",
+          "San Luis Río Colorado"
+        ]
+      },
+      {
+        "name": "Tabasco",
+        "code": "TAB",
+        "cities": [
+          "Balancán",
+          "Cárdenas",
+          "Centro",
+          "Comalcalco",
+          "Jalpa de Méndez",
+          "Macuspana",
+          "Nacajuca",
+          "Paraíso",
+          "Tenosique",
+          "Villahermosa"
+        ]
+      },
+      {
+        "name": "Tamaulipas",
+        "code": "TAM",
+        "cities": [
+          "Altamira",
+          "Ciudad Victoria",
+          "El Mante",
+          "Matamoros",
+          "Mante",
+          "Nuevo Laredo",
+          "Reynosa",
+          "San Fernando",
+          "Tampico",
+          "Victoria"
+        ]
+      },
+      {
+        "name": "Tlaxcala",
+        "code": "TLAX",
+        "cities": [
+          "Amaxac de Guerrero",
+          "Apizaco",
+          "Calpulalpan",
+          "Chiautempan",
+          "Huamantla",
+          "Panotla",
+          "San Pablo del Monte",
+          "Tlaxcala",
+          "Totolac",
+          "Zitlaltepec"
+        ]
+      },
+      {
+        "name": "Veracruz",
+        "code": "VER",
+        "cities": [
+          "Boca del Río",
+          "Cazones de Herrera",
+          "Coatzacoalcos",
+          "Córdoba",
+          "Minatitlán",
+          "Orizaba",
+          "Poza Rica",
+          "San Andrés Tuxtla",
+          "Tuxpan",
+          "Veracruz",
+          "Xalapa"
+        ]
+      },
+      {
+        "name": "Yucatán",
+        "code": "YUC",
+        "cities": [
+          "Abalá",
+          "Acanceh",
+          "Akil",
+          "Baca",
+          "Bokobá",
+          "Buctzotz",
+          "Cacalchén",
+          "Calotmul",
+          "Cansahcab",
+          "Cantamayec",
+          "Celestún",
+          "Cenotillo",
+          "Chacsinkín",
+          "Chankom",
+          "Chapab",
+          "Chemax",
+          "Chichimilá",
+          "Chicxulub Pueblo",
+          "Chikindzonot",
+          "Chocholá",
+          "Chumayel",
+          "Conkal",
+          "Cuncunul",
+          "Cuzamá",
+          "Dzan",
+          "Dzemul",
+          "Dzidzantún",
+          "Dzilam de Bravo",
+          "Dzilam González",
+          "Dzité",
+          "Dzoncauich",
+          "Espita",
+          "Halachó",
+          "Hocabá",
+          "Hoctún",
+          "Homún",
+          "Hunucmá",
+          "Ixil",
+          "Izamal",
+          "Kanasín",
+          "Kantunil",
+          "Kaua",
+          "Kinchil",
+          "Kopomá",
+          "Mama",
+          "Maní",
+          "Maxcanú",
+          "Mayapán",
+          "Mérida",
+          "Mocochá",
+          "Motul",
+          "Muna",
+          "Opichén",
+          "Oxkutzcab",
+          "Panabá",
+          "Peto",
+          "Progreso",
+          "Quintana Roo",
+          "Río Lagartos",
+          "Sacalum",
+          "Samahil",
+          "San Felipe",
+          "San Ignacio",
+          "San José Tipceh",
+          "Sanahcat",
+          "Santa Elena",
+          "Seyé",
+          "Sinanché",
+          "Sotuta",
+          "Sucilá",
+          "Suma de Hidalgo",
+          "Tahdziú",
+          "Tahmek",
+          "Teabo",
+          "Tecoh",
+          "Tekal de Venegas",
+          "Tekantó",
+          "Tekax",
+          "Tekit",
+          "Tekom",
+          "Telchac Pueblo",
+          "Telchac Puerto",
+          "Temax",
+          "Temozón",
+          "Tepakán",
+          "Tetiz",
+          "Teya",
+          "Ticul",
+          "Timucuy",
+          "Tinum",
+          "Tixcacalcupul",
+          "Tixkokob",
+          "Tixmehuac",
+          "Tixpéhual",
+          "Tizimín",
+          "Tunkás",
+          "Tzucacab",
+          "Uayma",
+          "Ucú",
+          "Umán",
+          "Valladolid",
+          "Xocchel",
+          "Yaxcabá",
+          "Yaxkukul",
+          "Yobaín"
+        ]
+      },
+      {
         "name": "Zacatecas",
         "code": "ZAC",
         "cities": [
-          "Zacatecas",
-          "Guadalupe",
           "Fresnillo",
+          "Guadalupe",
           "Jerez",
-          "Río Grande",
-          "Sombrerete",
-          "Villa de Cos",
           "Loreto",
           "Pánfilo Natera",
-          "Trancoso"
-                     ]
-                   }
-                ]
-            }
-        }
-
+          "Río Grande",
+          "Sombrerete",
+          "Trancoso",
+          "Villa de Cos",
+          "Zacatecas"
+        ]
+      }
+    ]
+  }
+}

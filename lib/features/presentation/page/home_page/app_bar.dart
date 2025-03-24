@@ -35,8 +35,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 if (snapshot.hasError || !snapshot.hasData) {
                   return CircleAvatar(
                     radius: 20,
-                    backgroundImage: AssetImage(
-                        'assets/images/placeholder/user_placeholder.jpg'),
+                    backgroundImage:
+                        AssetImage('assets/images/placeholder/avatar.jpg'),
                   );
                 }
 
@@ -46,8 +46,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   backgroundImage: userData?['imagen'] != null &&
                           userData?['imagen'].isNotEmpty
                       ? NetworkImage(userData?['imagen'])
-                      : AssetImage(
-                              'assets/images/placeholder/user_placeholder.jpg')
+                      : AssetImage('assets/images/placeholder/avatar.jpg')
                           as ImageProvider,
                 );
               },

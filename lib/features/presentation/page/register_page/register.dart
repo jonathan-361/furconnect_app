@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:convert';
 
 import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 
@@ -21,20 +22,114 @@ class _RegisterState extends State<Register> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  final TextEditingController cityController = TextEditingController();
-  final TextEditingController stateController = TextEditingController();
-  final TextEditingController countryController = TextEditingController();
+
+  String? selectedCountry;
+  String? selectedState;
+  String? selectedCity;
+
+  Map<String, dynamic> locationData = {};
+  List<String> countries = [];
+  List<Map<String, dynamic>> states = [];
+  List<String> cities = [];
 
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
 
-  bool _isCountrySelected = false;
-  bool _isStateSelected = false;
+  bool _isLoading = true;
 
   bool _obscureText = true;
   bool _obscureTextConfirm = true;
   String specialCharacters = "!@#\$%&*(),.?\":{}<>._";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocationData();
+  }
+
+  Future<void> _loadLocationData() async {
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/json/countries/countries.json');
+
+      final Map<String, dynamic> jsonData = json.decode(jsonString);
+
+      setState(() {
+        locationData = jsonData;
+        _initializeCountries();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading countries.json: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      // Show an error message using your overlay
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "Error al cargar datos de ubicación");
+      });
+    }
+  }
+
+  void _initializeCountries() {
+    if (locationData.containsKey('country')) {
+      countries = [locationData['country']['name']];
+    } else {
+      countries = [];
+    }
+  }
+
+  void _loadStates(String country) {
+    if (locationData.isEmpty || !locationData.containsKey('country')) {
+      setState(() {
+        states = [];
+        selectedState = null;
+        selectedCity = null;
+        cities = [];
+      });
+      return;
+    }
+
+    if (country == locationData['country']['name']) {
+      setState(() {
+        states =
+            List<Map<String, dynamic>>.from(locationData['country']['states']);
+        selectedState = null;
+        selectedCity = null;
+        cities = [];
+      });
+    } else {
+      setState(() {
+        states = [];
+        selectedState = null;
+        selectedCity = null;
+        cities = [];
+      });
+    }
+  }
+
+  void _loadCities(String state) {
+    for (var stateData in states) {
+      if (stateData['name'] == state) {
+        if (mounted) {
+          setState(() {
+            cities = List<String>.from(stateData['cities']);
+            print('Cities for state ${state}: ${cities.length}');
+            selectedCity = null;
+          });
+        }
+        return;
+      }
+    }
+    if (mounted) {
+      setState(() {
+        cities = [];
+        selectedCity = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,24 +343,25 @@ class _RegisterState extends State<Register> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: countryController,
+              DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'País',
                   border: OutlineInputBorder(),
-                  counterText: '',
                 ),
-                maxLength: 18,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
-                ],
-                onChanged: (value) {
+                value: selectedCountry,
+                hint: const Text('Selecciona un país'),
+                isExpanded: true,
+                items: countries.map((String country) {
+                  return DropdownMenuItem<String>(
+                    value: country,
+                    child: Text(country),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
                   setState(() {
-                    _isCountrySelected = value.isNotEmpty;
-                    if (!_isCountrySelected) {
-                      stateController.clear();
-                      cityController.clear();
+                    selectedCountry = newValue;
+                    if (newValue != null) {
+                      _loadStates(newValue);
                     }
                   });
                 },
@@ -277,50 +373,63 @@ class _RegisterState extends State<Register> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: stateController,
+              DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Estado',
                   border: OutlineInputBorder(),
-                  counterText: '',
                 ),
-                maxLength: 18,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
-                ],
-                enabled: _isCountrySelected,
-                onChanged: (value) {
-                  setState(() {
-                    _isStateSelected = value.isNotEmpty;
-                    if (!_isStateSelected) {
-                      cityController.clear();
-                    }
-                  });
-                },
+                value: selectedState,
+                hint: const Text('Selecciona un estado'),
+                isExpanded: true,
+                items: states.map((Map<String, dynamic> state) {
+                  return DropdownMenuItem<String>(
+                    value: state['name'],
+                    child: Text(state['name']),
+                  );
+                }).toList(),
+                onChanged: selectedCountry == null
+                    ? null
+                    : (String? newValue) {
+                        setState(() {
+                          selectedState = newValue;
+                          if (newValue != null) {
+                            _loadCities(newValue);
+                          }
+                        });
+                      },
                 validator: (value) {
-                  if (_isCountrySelected && (value == null || value.isEmpty)) {
+                  if (selectedCountry != null &&
+                      (value == null || value.isEmpty)) {
                     return 'El estado es obligatorio';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: cityController,
+              DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Localidad',
                   border: OutlineInputBorder(),
-                  counterText: '',
                 ),
-                maxLength: 18,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚ\s]+$')),
-                ],
-                enabled: _isStateSelected,
+                value: selectedCity,
+                hint: const Text('Selecciona una localidad'),
+                isExpanded: true,
+                items: cities.map((String city) {
+                  return DropdownMenuItem<String>(
+                    value: city,
+                    child: Text(city),
+                  );
+                }).toList(),
+                onChanged: selectedState == null
+                    ? null
+                    : (String? newValue) {
+                        setState(() {
+                          selectedCity = newValue;
+                        });
+                      },
                 validator: (value) {
-                  if (_isStateSelected && (value == null || value.isEmpty)) {
+                  if (selectedState != null &&
+                      (value == null || value.isEmpty)) {
                     return 'La localidad es obligatoria';
                   }
                   return null;
@@ -339,9 +448,9 @@ class _RegisterState extends State<Register> {
                           'email': emailController.text,
                           'password': passwordController.text,
                           'phone': phoneController.text,
-                          'city': cityController.text,
-                          'state': stateController.text,
-                          'country': countryController.text,
+                          'city': selectedCity,
+                          'state': selectedState,
+                          'country': selectedCountry
                         };
                         context.push('/chooseImage', extra: userData);
                       } else {

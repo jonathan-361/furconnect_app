@@ -17,6 +17,183 @@ import 'package:furconnect/features/presentation/page/pet_page/listOptions/breed
 import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
+// Widget personalizado para campos de formulario con altura fija y validación mejorada
+class FixedHeightFormField extends StatefulWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final FormFieldValidator<String>? validator;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLength;
+  final ValueChanged<String>? onChanged;
+  final double height;
+  final TextStyle? style;
+
+  const FixedHeightFormField({
+    Key? key,
+    required this.controller,
+    required this.labelText,
+    this.validator,
+    this.keyboardType,
+    this.inputFormatters,
+    this.maxLength,
+    this.onChanged,
+    this.height = 70,
+    this.style,
+  }) : super(key: key);
+
+  @override
+  State<FixedHeightFormField> createState() => _FixedHeightFormFieldState();
+}
+
+class _FixedHeightFormFieldState extends State<FixedHeightFormField> {
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (_errorText != null && widget.controller.text.isNotEmpty) {
+      setState(() {
+        _errorText = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: widget.height,
+      child: TextFormField(
+        controller: widget.controller,
+        style: widget.style ?? const TextStyle(fontSize: 17),
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          errorText: _errorText,
+          counterText: '',
+        ),
+        maxLength: widget.maxLength,
+        keyboardType: widget.keyboardType,
+        inputFormatters: widget.inputFormatters,
+        validator: (value) {
+          if (widget.validator != null) {
+            final error = widget.validator!(value);
+            setState(() {
+              _errorText = error;
+            });
+            return error;
+          }
+          return null;
+        },
+        onChanged: (value) {
+          if (widget.onChanged != null) {
+            widget.onChanged!(value);
+          }
+          if (_errorText != null) {
+            setState(() {
+              _errorText = null;
+            });
+          }
+        },
+      ),
+    );
+  }
+}
+
+// Widget para DropdownButtonFormField con altura fija y validación mejorada
+class FixedHeightDropdownField<T> extends StatefulWidget {
+  final T? value;
+  final String labelText;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?>? onChanged;
+  final FormFieldValidator<T>? validator;
+  final double height;
+
+  const FixedHeightDropdownField({
+    Key? key,
+    required this.value,
+    required this.labelText,
+    required this.items,
+    this.onChanged,
+    this.validator,
+    this.height = 70,
+  }) : super(key: key);
+
+  @override
+  State<FixedHeightDropdownField<T>> createState() =>
+      _FixedHeightDropdownFieldState<T>();
+}
+
+class _FixedHeightDropdownFieldState<T>
+    extends State<FixedHeightDropdownField<T>> {
+  String? _errorText;
+  T? _currentValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentValue = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: widget.height,
+      child: DropdownButtonFormField<T>(
+        value: _currentValue,
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          errorText: _errorText,
+        ),
+        items: widget.items,
+        onChanged: (T? newValue) {
+          setState(() {
+            _currentValue = newValue;
+            _errorText = null;
+          });
+          if (widget.onChanged != null) {
+            widget.onChanged!(newValue);
+          }
+        },
+        validator: (value) {
+          if (widget.validator != null) {
+            final error = widget.validator!(value);
+            setState(() {
+              _errorText = error;
+            });
+            return error;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+}
+
+class MaxAgeInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final newText = newValue.text;
+    if (newText.isNotEmpty && int.tryParse(newText) != null) {
+      final int value = int.parse(newText);
+      if (value > 15) {
+        return oldValue;
+      }
+    }
+    return newValue;
+  }
+}
+
 class NewPetUser extends StatefulWidget {
   const NewPetUser({super.key});
 
@@ -121,7 +298,8 @@ class _NewPetUserState extends State<NewPetUser> {
             await image.readAsBytes(),
             filename: 'image.jpg',
           ),
-          'upload_preset': 'upload_image_flutter',
+          'upload_preset': 'image_pet_preset',
+          'folder': 'pets',
         });
 
         final response = await Dio().post(
@@ -196,6 +374,12 @@ class _NewPetUserState extends State<NewPetUser> {
     final usuarioId = await _getUserId();
 
     if (_formKey.currentState?.validate() ?? false) {
+      if (!breedList.any((breed) =>
+          breed.toLowerCase() == _breedController.text.trim().toLowerCase())) {
+        AppOverlay.showOverlay(context, Colors.red,
+            "Por favor selecciona una raza válida de la lista");
+        return false;
+      }
       if (_selectedImages.isEmpty) {
         setState(() {
           _imageError = true;
@@ -380,210 +564,233 @@ class _NewPetUserState extends State<NewPetUser> {
                           ),
                         ),
                       const SizedBox(height: 10),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: "Nombre",
-                            counterText: '',
-                          ),
-                          maxLength: 18,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa un nombre";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      Autocomplete<String>(
-                        optionsBuilder: (TextEditingValue textEditingValue) {
-                          if (textEditingValue.text.isEmpty) {
-                            return const Iterable<String>.empty();
+
+                      // Nombre - Usando FixedHeightFormField
+                      FixedHeightFormField(
+                        controller: _nameController,
+                        labelText: "Nombre",
+                        maxLength: 18,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor ingresa un nombre";
                           }
-                          return breedList.where((breed) => breed
-                              .toLowerCase()
-                              .contains(textEditingValue.text.toLowerCase()));
+                          return null;
                         },
-                        onSelected: (String selection) {
-                          _breedController.text = selection;
-                        },
-                        fieldViewBuilder: (context, controller, focusNode,
-                            onEditingComplete) {
-                          return SizedBox(
-                            height: 50,
-                            child: TextFormField(
-                              controller: controller,
-                              focusNode: focusNode,
-                              decoration: const InputDecoration(
-                                labelText: "Raza",
-                                counterText: '',
-                              ),
-                              style: const TextStyle(fontSize: 17),
-                              maxLength: 18,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
-                                ),
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Por favor ingresa una raza";
-                                }
-                                return null;
+                      ),
+
+                      // Raza - Autocomplete con manejo especial
+                      Container(
+                        height: 70,
+                        child: Autocomplete<String>(
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return breedList.where((breed) => breed
+                                .toLowerCase()
+                                .contains(textEditingValue.text.toLowerCase()));
+                          },
+                          onSelected: (String selection) {
+                            _breedController.text = selection;
+                          },
+                          fieldViewBuilder: (context, controller, focusNode,
+                              onEditingComplete) {
+                            // Reemplazamos el controlador temporal por nuestro controlador persistente
+                            controller.text = _breedController.text;
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                String? errorText;
+                                return TextFormField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  onEditingComplete: onEditingComplete,
+                                  decoration: InputDecoration(
+                                    labelText: "Raza",
+                                    counterText: '',
+                                    errorText: errorText,
+                                  ),
+                                  style: const TextStyle(fontSize: 17),
+                                  maxLength: 18,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
+                                    ),
+                                  ],
+                                  validator: (value) {
+                                    _breedController.text = controller.text;
+                                    if (value == null || value.isEmpty) {
+                                      setState(() {
+                                        errorText =
+                                            "Por favor ingresa una raza";
+                                      });
+                                      return "Por favor ingresa una raza";
+                                    }
+                                    if (!breedList.any((breed) =>
+                                        breed.toLowerCase() ==
+                                        value.trim().toLowerCase())) {
+                                      setState(() {
+                                        errorText =
+                                            "Selecciona una raza válida de la lista";
+                                      });
+                                      return "Selecciona una raza válida de la lista";
+                                    }
+                                    setState(() {
+                                      errorText = null;
+                                    });
+                                    return null;
+                                  },
+                                  onChanged: (text) {
+                                    _breedController.text = text;
+                                    if (errorText != null) {
+                                      setState(() {
+                                        errorText = null;
+                                      });
+                                    }
+                                  },
+                                );
                               },
-                            ),
-                          );
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Color
+                      FixedHeightFormField(
+                        controller: _colorController,
+                        labelText: "Color",
+                        maxLength: 25,
+                        style: TextStyle(fontSize: 17),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor ingresa un color";
+                          }
+                          return null;
                         },
                       ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _colorController,
-                          decoration: const InputDecoration(
-                            labelText: "Color",
-                            counterText: '',
-                          ),
-                          style: TextStyle(fontSize: 17),
-                          maxLength: 25,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s,\/]+$')),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa un color";
-                            }
-                            return null;
-                          },
-                        ),
+
+                      // Tamaño - DropdownButtonFormField mejorado
+                      FixedHeightDropdownField<String>(
+                        value: selectedSize,
+                        labelText: 'Tamaño',
+                        items: sizes.map((String size) {
+                          return DropdownMenuItem<String>(
+                            value: size,
+                            child: Text(size),
+                          );
+                        }).toList(),
+                        onChanged: (String? newSize) {
+                          setState(() {
+                            selectedSize = newSize;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor selecciona un tamaño";
+                          }
+                          return null;
+                        },
                       ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedSize,
-                          decoration:
-                              const InputDecoration(labelText: 'Tamaño'),
-                          items: sizes.map((String size) {
-                            return DropdownMenuItem<String>(
-                              value: size,
-                              child: Text(size),
-                            );
-                          }).toList(),
-                          onChanged: (String? newSize) {
+
+                      // Edad
+                      FixedHeightFormField(
+                        controller: _ageController,
+                        labelText: "Edad",
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(fontSize: 17),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                          MaxAgeInputFormatter(),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor ingresa una edad";
+                          }
+                          final age = int.tryParse(value);
+                          if (age == null || age <= 0) {
+                            return "Edad inválida";
+                          }
+                          if (age > 15) {
+                            return "La edad no puede ser mayor de 15";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Sexo
+                      FixedHeightDropdownField<String>(
+                        value: selectedGender,
+                        labelText: 'Sexo',
+                        items: genders.map((String gender) {
+                          return DropdownMenuItem<String>(
+                            value: gender,
+                            child: Text(gender),
+                          );
+                        }).toList(),
+                        onChanged: (String? newGender) {
+                          setState(() {
+                            selectedGender = newGender;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor selecciona el sexo";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Temperamento
+                      FixedHeightDropdownField<String>(
+                        value: selectedTemperament,
+                        labelText: 'Temperamento',
+                        items: temperaments.map((String temperament) {
+                          return DropdownMenuItem<String>(
+                            value: temperament,
+                            child: Text(temperament),
+                          );
+                        }).toList(),
+                        onChanged: (String? newTemperament) {
+                          setState(() {
+                            selectedTemperament = newTemperament;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Por favor selecciona el temperamento";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Vacunas
+                      FixedHeightFormField(
+                        controller: _vacuumController,
+                        labelText: "Vacunas",
+                        maxLength: 15,
+                        style: TextStyle(fontSize: 17),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
+                        ],
+                        onChanged: (value) {
+                          if (value.trim().isNotEmpty && value.contains(' ')) {
                             setState(() {
-                              selectedSize = newSize;
+                              vaccines.add(value.trim());
+                              _vacuumController.clear();
                             });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona un tamaño";
-                            }
-                            return null;
-                          },
-                        ),
+                          }
+                        },
                       ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _ageController,
-                          decoration: const InputDecoration(
-                            labelText: "Edad",
-                            counterText: '',
-                          ),
-                          style: TextStyle(fontSize: 17),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(2),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor ingresa una edad";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedGender,
-                          decoration: const InputDecoration(labelText: 'Sexo'),
-                          items: genders.map((String gender) {
-                            return DropdownMenuItem<String>(
-                              value: gender,
-                              child: Text(gender),
-                            );
-                          }).toList(),
-                          onChanged: (String? newGender) {
-                            setState(() {
-                              selectedGender = newGender;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona el sexo";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: DropdownButtonFormField<String>(
-                          value: selectedTemperament,
-                          decoration:
-                              const InputDecoration(labelText: 'Temperamento'),
-                          items: temperaments.map((String temperament) {
-                            return DropdownMenuItem<String>(
-                              value: temperament,
-                              child: Text(temperament),
-                            );
-                          }).toList(),
-                          onChanged: (String? newTemperament) {
-                            setState(() {
-                              selectedTemperament = newTemperament;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Por favor selecciona el temperamento";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        child: TextFormField(
-                          controller: _vacuumController,
-                          decoration: const InputDecoration(
-                            labelText: "Vacunas",
-                            counterText: '',
-                          ),
-                          style: TextStyle(fontSize: 17),
-                          maxLength: 15,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$')),
-                          ],
-                          onChanged: (value) {
-                            if (value.trim().isNotEmpty &&
-                                value.contains(' ')) {
-                              setState(() {
-                                vaccines.add(value.trim());
-                                _vacuumController.clear();
-                              });
-                            }
-                          },
-                        ),
-                      ),
+
                       Wrap(
                         spacing: 8.0,
                         runSpacing: 4.0,
@@ -599,6 +806,7 @@ class _NewPetUserState extends State<NewPetUser> {
                           );
                         }).toList(),
                       ),
+
                       Row(
                         children: [
                           const Text("Pedigree:"),
@@ -614,6 +822,7 @@ class _NewPetUserState extends State<NewPetUser> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 20),
                       SizedBox(
                         width: MediaQuery.of(context).size.width,

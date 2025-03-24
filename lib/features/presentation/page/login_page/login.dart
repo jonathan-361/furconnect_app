@@ -210,19 +210,6 @@ class _LoginState extends State<Login> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  context.push('/testPage');
-                                },
-                                child: const Text(
-                                  'Test',
-                                  style: TextStyle(
-                                    fontFamily: 'RobotoR',
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),

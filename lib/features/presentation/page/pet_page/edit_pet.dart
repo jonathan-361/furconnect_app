@@ -61,9 +61,6 @@ class EditPet extends StatelessWidget {
       final decodedToken = JwtDecoder.decode(token);
       final usuarioId = decodedToken['id'];
 
-      print("===== DATOS PARA ACTUALIZAR MASCOTA =====");
-      print("Pet ID: $petData['imagen']");
-
       try {
         final success = await _petService.updatePet(
           petData['_id'],

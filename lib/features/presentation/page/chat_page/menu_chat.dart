@@ -62,23 +62,70 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
       final chatData = await _chatService.getChats();
 
       if (mounted) {
-        // Ordenar los chats por la fecha del último mensaje
+        // Ordenar los chats por la fecha del último mensaje o novedad del chat
         chatData.sort((a, b) {
           // Obtener el último mensaje de cada chat
           final aMessages = a['mensajes'] ?? [];
           final bMessages = b['mensajes'] ?? [];
 
-          // Si no hay mensajes, usar una fecha antigua como fallback
-          final aTimestamp = aMessages.isNotEmpty
-              ? aMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z'
-              : '1970-01-01T00:00:00.000Z';
+          // Extraer timestamps de los IDs (asumiendo que son ObjectIds de MongoDB)
+          final String aId = a['_id'] ?? '';
+          final String bId = b['_id'] ?? '';
 
-          final bTimestamp = bMessages.isNotEmpty
-              ? bMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z'
-              : '1970-01-01T00:00:00.000Z';
+          // Obtener versión (puede indicar cuán reciente es un chat)
+          final int aVersion = a['__v'] ?? 0;
+          final int bVersion = b['__v'] ?? 0;
 
-          // Ordenar del más reciente al más antiguo
-          return bTimestamp.compareTo(aTimestamp);
+          // Para chats con mensajes, usar el timestamp del último mensaje
+          if (aMessages.isNotEmpty && bMessages.isNotEmpty) {
+            final aTimestamp =
+                aMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
+            final bTimestamp =
+                bMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
+            return bTimestamp.compareTo(aTimestamp);
+          }
+
+          // Si un chat tiene mensajes y el otro no, el que tiene mensajes va primero
+          // a menos que el chat sin mensajes sea más nuevo (basado en ID)
+          if (aMessages.isNotEmpty && bMessages.isEmpty) {
+            // Comparar timestamp del mensaje con la "novedad" del chat B
+            final aTimestamp =
+                aMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
+
+            // Si el ID de B parece más reciente, B va primero
+            if (bId.compareTo(aId) > 0) {
+              return 1; // B es más reciente (por ID), así que B va primero
+            }
+
+            // Si la versión de B es mayor, B podría ser más reciente
+            if (bVersion > aVersion) {
+              return 1; // B podría ser más reciente (por versión), así que B va primero
+            }
+
+            return -1; // A tiene mensajes y B no parece más reciente, así que A va primero
+          }
+
+          if (bMessages.isNotEmpty && aMessages.isEmpty) {
+            // Comparar timestamp del mensaje con la "novedad" del chat A
+            final bTimestamp =
+                bMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
+
+            // Si el ID de A parece más reciente, A va primero
+            if (aId.compareTo(bId) > 0) {
+              return -1; // A es más reciente (por ID), así que A va primero
+            }
+
+            // Si la versión de A es mayor, A podría ser más reciente
+            if (aVersion > bVersion) {
+              return -1; // A podría ser más reciente (por versión), así que A va primero
+            }
+
+            return 1; // B tiene mensajes y A no parece más reciente, así que B va primero
+          }
+
+          // Si ninguno tiene mensajes, ordenar por ID (asumiendo que los IDs más recientes son mayores)
+          // Lo que funciona bien con ObjectIds de MongoDB
+          return bId.compareTo(aId);
         });
 
         setState(() {
@@ -105,34 +152,49 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
         backgroundColor: const Color(0xFF894936),
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchChats,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : errorMessage != null
-                ? Center(
-                    child: Text(
-                      errorMessage!,
-                      style: const TextStyle(fontSize: 18, color: Colors.red),
-                    ),
-                  )
-                : _chats.isNotEmpty
-                    ? ListView.builder(
-                        itemCount: _chats.length,
-                        itemBuilder: (context, index) {
-                          final chat = _chats[index];
-                          return ItemChat(
-                            chat: chat,
-                            onTap: () => _navigateToChat(context, chat),
-                          );
-                        },
-                      )
-                    : const Center(
-                        child: Text(
-                          "No tienes chats aún",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
+          onRefresh: _fetchChats,
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : errorMessage != null
+                  ? Center(
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(fontSize: 18, color: Colors.red),
                       ),
-      ),
+                    )
+                  : _chats.isNotEmpty
+                      ? ListView.builder(
+                          itemCount: _chats.length,
+                          itemBuilder: (context, index) {
+                            final chat = _chats[index];
+                            return ItemChat(
+                              chat: chat,
+                              onTap: () => _navigateToChat(context, chat),
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.pets,
+                                size: 70,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No tienes chats aún',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[700],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )),
     );
   }
 

@@ -40,8 +40,7 @@ class SideBar extends StatelessWidget {
                   backgroundImage: userData?['imagen'] != null &&
                           userData?['imagen'].isNotEmpty
                       ? NetworkImage(userData?['imagen'])
-                      : AssetImage(
-                              'assets/images/placeholder/user_placeholder.jpg')
+                      : AssetImage('assets/images/placeholder/avatar.jpg')
                           as ImageProvider,
                 ),
               ),

@@ -60,6 +60,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
   final double _scrollThreshold = 300.0;
   String _raza = '';
   String _sexo = '';
+  String _edad = '';
 
   @override
   void initState() {
@@ -96,7 +97,6 @@ class __HomePageBodyState extends State<_HomePageBody> {
                               selected: _sexo == 'macho',
                               onSelected: (bool value) {
                                 _onSexSelected('macho');
-                                getPetsBreed();
                               },
                             ),
                             FilterChip(
@@ -104,6 +104,27 @@ class __HomePageBodyState extends State<_HomePageBody> {
                               selected: _sexo == 'hembra',
                               onSelected: (bool value) {
                                 _onSexSelected('hembra');
+                              },
+                            ),
+                            FilterChip(
+                              label: Text('1 a 5 años'),
+                              selected: _edad == '1-5',
+                              onSelected: (bool value) {
+                                _onAgeSelected('1-5');
+                              },
+                            ),
+                            FilterChip(
+                              label: Text('6 a 10 años'),
+                              selected: _edad == '6-10',
+                              onSelected: (bool value) {
+                                _onAgeSelected('6-10');
+                              },
+                            ),
+                            FilterChip(
+                              label: Text('+11 años'),
+                              selected: _edad == '11-15',
+                              onSelected: (bool value) {
+                                _onAgeSelected('11-15');
                               },
                             ),
                           ],
@@ -123,33 +144,65 @@ class __HomePageBodyState extends State<_HomePageBody> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _refreshPets,
-                child: GridView.builder(
-                  controller: _scrollController,
-                  padding: EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.8,
-                  ),
-                  itemCount: pets.length + (hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index < pets.length) {
-                      final petData = pets[index];
-                      return _buildPetCard(
-                        petData: petData,
-                        context: context,
-                      );
-                    } else {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
+                child: pets.isEmpty && !isLoading
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.pets,
+                              size: 70,
+                              color: Colors.grey[400],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "Qué vacío se siente por aquí",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "¡Prueba con otros filtros!",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                      );
-                    }
-                  },
-                ),
+                      )
+                    : GridView.builder(
+                        controller: _scrollController,
+                        padding: EdgeInsets.all(8.0),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 0.8,
+                        ),
+                        itemCount: pets.length + (hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index < pets.length) {
+                            final petData = pets[index];
+                            return _buildPetCard(
+                              petData: petData,
+                              context: context,
+                            );
+                          } else {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
               ),
             ),
           ],
@@ -173,12 +226,6 @@ class __HomePageBodyState extends State<_HomePageBody> {
     );
   }
 
-  String _encodeSpecialCharacters(String input) {
-    return input.replaceAllMapped(RegExp(r'[()´{}\sáéíóúÁÉÍÓÚ]'), (match) {
-      return Uri.encodeComponent(match.group(0)!);
-    });
-  }
-
   void _loadPets() async {
     if (isLoading || !hasMore) return;
 
@@ -187,12 +234,12 @@ class __HomePageBodyState extends State<_HomePageBody> {
     });
 
     try {
-      // Obtener las mascotas de la API
       final newPets = await widget.petService.getPetsFilter(
         currentPage,
         10,
         _raza,
         _sexo,
+        _edad,
       );
 
       if (!mounted) return;
@@ -245,6 +292,17 @@ class __HomePageBodyState extends State<_HomePageBody> {
         _sexo = '';
       } else {
         _sexo = sexo;
+      }
+    });
+    _refreshPets();
+  }
+
+  void _onAgeSelected(String edad) {
+    setState(() {
+      if (_edad == edad) {
+        _edad = '';
+      } else {
+        _edad = edad;
       }
     });
     _refreshPets();
@@ -466,25 +524,21 @@ class FilterModal extends StatefulWidget {
 }
 
 class _FilterModalState extends State<FilterModal> {
-  late String? selectedBreed; // Almacena la raza seleccionada
+  late String? selectedBreed;
   late bool onlyVaccinated;
 
   @override
   void initState() {
     super.initState();
-    selectedBreed =
-        widget.initialSelectedBreed; // Inicializar con el valor recibido
+    selectedBreed = widget.initialSelectedBreed;
     onlyVaccinated = widget.onlyVaccinated;
   }
 
-  // Método para manejar la selección/deselección de razas
   void _onBreedSelected(String breed, bool isSelected) {
     setState(() {
       if (isSelected) {
-        // Si se selecciona una raza, deseleccionar cualquier otra raza seleccionada
         selectedBreed = breed;
       } else {
-        // Si se deselecciona la raza, establecer selectedBreed en null
         selectedBreed = null;
       }
     });
@@ -502,13 +556,10 @@ class _FilterModalState extends State<FilterModal> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
-
-          // Contenido desplazable
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Checkbox para "Solo mascotas vacunadas"
                   CheckboxListTile(
                     title: Text('Solo mascotas vacunadas'),
                     value: onlyVaccinated,
@@ -518,19 +569,13 @@ class _FilterModalState extends State<FilterModal> {
                       });
                     },
                   ),
-
-                  // Lista de razas con CheckboxListTile
                   if (widget.breeds.isNotEmpty) ...[
                     ...widget.breeds.map((breed) {
                       return CheckboxListTile(
                         title: Text(breed),
-                        value: selectedBreed ==
-                            breed, // Verificar si esta raza está seleccionada
+                        value: selectedBreed == breed,
                         onChanged: (value) {
-                          _onBreedSelected(
-                              breed,
-                              value ??
-                                  false); // Manejar la selección/deselección
+                          _onBreedSelected(breed, value ?? false);
                         },
                       );
                     }).toList(),
@@ -539,13 +584,10 @@ class _FilterModalState extends State<FilterModal> {
               ),
             ),
           ),
-
-          // Botón para aplicar filtros
           SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              widget.onApplyFilters(selectedBreed,
-                  onlyVaccinated); // Pasar la raza seleccionada y el estado de vacunación
+              widget.onApplyFilters(selectedBreed, onlyVaccinated);
               Navigator.pop(context);
             },
             child: Text('Aplicar filtros'),

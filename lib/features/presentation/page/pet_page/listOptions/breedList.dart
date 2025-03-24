@@ -11,7 +11,6 @@ final List<String> breedList = [
   'Pug',
   'Salchicha',
   'Gran Danés',
-  'Husky Siberiano',
   'Rottweiler',
   'Beagle',
   'Golden Retriever',

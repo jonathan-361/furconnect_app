@@ -59,51 +59,98 @@ class _MatchPageState extends State<MatchPage> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      ListView.builder(
-                        padding: EdgeInsets.all(8),
-                        itemCount: receiveRequest.length,
-                        itemBuilder: (context, index) {
-                          var request = receiveRequest[index];
-                          return MyItemReceiveRequest(
-                            petData: request['mascota_solicitante_id'],
-                            acceptButton: 'Aceptar',
-                            rejectButton: 'Rechazar',
-                            requestId: request['_id'].toString(),
-                            requestService: widget.requestService,
-                            onRequestHandled: _reloadReceiveRequests,
-                          );
-                        },
-                      ),
-                      ListView.builder(
-                        padding: EdgeInsets.all(8),
-                        itemCount: sendRequests.length,
-                        itemBuilder: (context, index) {
-                          var request = sendRequests[index];
-                          return GestureDetector(
-                            onTap: () {
-                              // Navegar a PetCardHome cuando se toca un elemento de la lista
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PetCardHome(
+                      receiveRequest.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.pets,
+                                    size: 70,
+                                    color: Colors.grey[400],
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Todavía no tienes solicitudes recibidas',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[700],
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.all(8),
+                              itemCount: receiveRequest.length,
+                              itemBuilder: (context, index) {
+                                var request = receiveRequest[index];
+                                return MyItemReceiveRequest(
+                                  petData: request['mascota_solicitante_id'],
+                                  acceptButton: 'Aceptar',
+                                  rejectButton: 'Rechazar',
+                                  requestId: request['_id'].toString(),
+                                  requestService: widget.requestService,
+                                  onRequestHandled: _reloadReceiveRequests,
+                                );
+                              },
+                            ),
+                      sendRequests.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.pets,
+                                    size: 70,
+                                    color: Colors.grey[400],
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Todavía no has enviado solicitudes',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[700],
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.all(8),
+                              itemCount: sendRequests.length,
+                              itemBuilder: (context, index) {
+                                var request = sendRequests[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Navegar a PetCardHome cuando se toca un elemento de la lista
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PetCardHome(
+                                          petData:
+                                              request['mascota_solicitante_id'],
+                                          source: 'requestSend',
+                                          requestId: request['_id'].toString(),
+                                          onDelete: _deleteRequestHandler,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: MyItemRequestSend(
                                     petData: request['mascota_solicitante_id'],
-                                    source: 'requestSend',
+                                    deleteButton: 'Borrar solicitud',
                                     requestId: request['_id'].toString(),
+                                    requestService: widget.requestService,
                                     onDelete: _deleteRequestHandler,
                                   ),
-                                ),
-                              );
-                            },
-                            child: MyItemRequestSend(
-                              petData: request['mascota_solicitante_id'],
-                              deleteButton: 'Borrar solicitud',
-                              requestId: request['_id'].toString(),
-                              requestService: widget.requestService,
-                              onDelete: _deleteRequestHandler,
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ],
                   ),
                 ),

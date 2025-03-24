@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
@@ -41,17 +42,20 @@ class _ChatPageState extends State<ChatPage> {
   int _pageSize = 10;
   bool _hasMoreMessages = true;
   bool _emojiShowing = false;
+  String _draftMessage = '';
+  String get _draftMessageKey => 'draft_message_${widget.chatId}';
 
   @override
   void initState() {
     super.initState();
+
     _socketService = SocketService(LoginService(ApiService()));
     _socketService.connect();
+    _loadDraftMessage();
     _initializeChat();
 
     _socketService.joinRoom(widget.chatId);
 
-    // Listen for new messages
     _socketService.onReceiveMessage((message) {
       setState(() {
         _messages.insert(0, message);
@@ -60,6 +64,40 @@ class _ChatPageState extends State<ChatPage> {
 
     // Listen for scroll events
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _loadDraftMessage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedDraft = prefs.getString(_draftMessageKey) ?? '';
+
+      if (mounted) {
+        setState(() {
+          _draftMessage = savedDraft;
+          _messageController.text = savedDraft;
+        });
+      }
+    } catch (e) {
+      print('Error loading draft message: $e');
+    }
+  }
+
+  Future<void> _saveDraftMessage(String message) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_draftMessageKey, message);
+    } catch (e) {
+      print('Error saving draft message: $e');
+    }
+  }
+
+  Future<void> _clearDraftMessage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_draftMessageKey);
+    } catch (e) {
+      print('Error clearing draft message: $e');
+    }
   }
 
   void _scrollToBottom() {
@@ -81,18 +119,17 @@ class _ChatPageState extends State<ChatPage> {
         'timestamp': DateTime.now().toIso8601String(),
       };
 
-      // Agregar el mensaje a la lista local
-      setState(() {
-        _messages.insert(0, newMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.insert(0, newMessage);
+          _draftMessage = '';
+          _messageController.clear();
+        });
+      }
 
-      // Enviar el mensaje a través del socket
       _socketService.sendMessage(widget.chatId, _userId!, message);
-
-      // Limpiar el campo de texto
       _messageController.clear();
-
-      // Desplazarse al final de la lista (inicio en lista invertida)
+      _clearDraftMessage();
       _scrollToBottom();
     }
   }
@@ -113,9 +150,11 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _loadMessages() async {
     if (_isLoadingMore || !_hasMoreMessages) return;
 
-    setState(() {
-      _isLoadingMore = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    }
 
     try {
       final chatData = await chatService.getChatById(widget.chatId);
@@ -123,11 +162,22 @@ class _ChatPageState extends State<ChatPage> {
         final allMessages =
             List<Map<String, dynamic>>.from(chatData['mensajes']);
 
-        // Sort messages by timestamp if available, or keep original order
+        if (allMessages.isEmpty) {
+          if (mounted) {
+            setState(() {
+              _messages = [];
+              _isLoadingMessage = false;
+              _hasMoreMessages = false;
+              _isLoadingMore = false;
+            });
+          }
+          return;
+        }
+
         allMessages.sort((a, b) {
           final aTime = a['timestamp'] ?? '';
           final bTime = b['timestamp'] ?? '';
-          return bTime.compareTo(aTime); // Descending order (newest first)
+          return bTime.compareTo(aTime);
         });
 
         // Calculate pagination
@@ -136,44 +186,48 @@ class _ChatPageState extends State<ChatPage> {
 
         // Check if we've reached the end
         if (startIndex >= allMessages.length) {
-          setState(() {
-            _hasMoreMessages = false;
-            _isLoadingMore = false;
-          });
+          if (mounted) {
+            setState(() {
+              _hasMoreMessages = false;
+              _isLoadingMore = false;
+            });
+          }
           return;
         }
 
-        // Get the page of messages
         final int actualEndIndex =
             endIndex > allMessages.length ? allMessages.length : endIndex;
         final List<Map<String, dynamic>> pageMessages =
             allMessages.sublist(startIndex, actualEndIndex);
 
-        setState(() {
-          if (_currentPage == 1) {
-            // First page, replace all messages
-            _messages = pageMessages;
-          } else {
-            // Add older messages to the end (which appears at the top when scrolling up)
-            _messages.addAll(pageMessages);
-          }
-          _currentPage++;
-          _isLoadingMessage = false;
-        });
-
-        // If we loaded fewer messages than page size, there are no more messages
-        if (pageMessages.length < _pageSize) {
+        if (mounted) {
           setState(() {
-            _hasMoreMessages = false;
+            if (_currentPage == 1) {
+              _messages = pageMessages;
+            } else {
+              _messages.addAll(pageMessages);
+            }
+            _currentPage++;
+            _isLoadingMessage = false;
           });
+        }
+
+        if (pageMessages.length < _pageSize) {
+          if (mounted) {
+            setState(() {
+              _hasMoreMessages = false;
+            });
+          }
         }
       }
     } catch (e) {
       print('Error loading messages: $e');
     } finally {
-      setState(() {
-        _isLoadingMore = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -258,51 +312,73 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           children: [
             Expanded(
-              child: _isLoadingMessage && _messages.isEmpty
+              child: _isLoadingMessage
                   ? Center(child: CircularProgressIndicator())
-                  : Stack(
-                      children: [
-                        ListView.builder(
-                          controller: _scrollController,
-                          reverse: true, // Show newest messages at the bottom
-                          padding: EdgeInsets.all(10),
-                          itemCount:
-                              _messages.length + (_isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            // Show loading indicator at the end (top of reversed list)
-                            if (_isLoadingMore && index == _messages.length) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-
-                            final message = _messages[index];
-                            final isSender = _isMessageFromCurrentUser(message);
-
-                            return Align(
-                              alignment: isSender
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: _ChatBubble(
-                                message: message['content'],
-                                isSender: isSender,
+                  : _messages.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.pets,
+                                size: 70,
+                                color: const Color.fromARGB(186, 34, 22, 10),
                               ),
-                            );
-                          },
+                              SizedBox(height: 16),
+                              Text(
+                                'No hay mensajes aún. ¡Sé el primero en escribir!',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color.fromARGB(186, 34, 22, 10),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Stack(
+                          children: [
+                            ListView.builder(
+                              controller: _scrollController,
+                              reverse: true,
+                              padding: EdgeInsets.all(10),
+                              itemCount:
+                                  _messages.length + (_isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (_isLoadingMore &&
+                                    index == _messages.length) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+
+                                final message = _messages[index];
+                                final isSender =
+                                    _isMessageFromCurrentUser(message);
+
+                                return Align(
+                                  alignment: isSender
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: _ChatBubble(
+                                    message: message['content'],
+                                    isSender: isSender,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
             ),
             Offstage(
               offstage: !_emojiShowing,
               child: EmojiPickerWidget(
                 textEditingController: _messageController,
-                onEmojiSelected: () {
-                  // Lógica adicional si es necesario
-                },
+                onEmojiSelected: () {},
               ),
             ),
             Container(
@@ -333,8 +409,17 @@ class _ChatPageState extends State<ChatPage> {
                   Expanded(
                     child: TextField(
                       controller: _messageController,
+                      onChanged: (value) {
+                        if (mounted) {
+                          setState(() {
+                            _draftMessage = value;
+                          });
+                          _saveDraftMessage(value);
+                        }
+                      },
                       decoration: InputDecoration(
-                        hintText: 'Escribe un mensaje...',
+                        hintText:
+                            _isLoadingMessage ? '' : 'Escribe un mensaje...',
                         hintStyle: TextStyle(fontSize: 14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),

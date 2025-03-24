@@ -39,18 +39,26 @@ class SocketService {
   }
 
   void sendMessage(String chatRoomId, String senderId, String content) {
-    _socket.emit('sendMessage', {
-      'chatRoomId': chatRoomId,
-      'sender': senderId,
-      'content': content,
-    });
+    try {
+      _socket.emit('sendMessage', {
+        'chatRoomId': chatRoomId,
+        'sender': senderId,
+        'content': content,
+      });
+    } catch (e) {
+      print('Error al enviar mensaje: $e');
+    }
   }
 
   // Método para escuchar mensajes recibidos
   void onReceiveMessage(Function(Map<String, dynamic>) callback) {
-    _socket.on('receiveMessage', (data) {
-      callback(data);
-    });
+    try {
+      _socket.on('receiveMessage', (data) {
+        callback(data);
+      });
+    } catch (e) {
+      print('Error al recibir mensaje: $e');
+    }
   }
 
   void joinRoom(String chatRoomId) {

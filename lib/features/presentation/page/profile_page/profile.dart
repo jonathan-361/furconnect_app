@@ -80,7 +80,7 @@ class Profile extends StatelessWidget {
                                   userImage.isNotEmpty
                               ? NetworkImage(userImage)
                               : AssetImage(
-                                      'assets/images/placeholder/user_placeholder.jpg')
+                                      'assets/images/placeholder/avatar.jpg')
                                   as ImageProvider,
                         ),
                       ),

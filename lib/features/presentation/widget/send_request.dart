@@ -98,10 +98,11 @@ class _SendRequestState extends State<SendRequest> {
     }
   }
 
-  Future<List<dynamic>> _getPets(String userId) async {
+  Future<List<dynamic>> _getPets(String userId, String raza) async {
     final petService = PetService(ApiService(), LoginService(ApiService()));
     try {
-      return await petService.getPetsByOwner(userId);
+      final allPets = await petService.getPetsByOwner(userId);
+      return allPets.where((pet) => pet['raza'] == raza).toList();
     } catch (err) {
       print('Error al obtener las mascotas: $err');
       return [];
@@ -112,16 +113,35 @@ class _SendRequestState extends State<SendRequest> {
     showLoadingOverlay();
     final userId = await _getUserId();
     if (userId == null) {
+      hideLoadingOverlay();
       return;
     }
 
-    final pets = await _getPets(userId);
+    // Obtener la raza de la mascota
+    final raza = widget.petData['raza'];
+    if (raza == null) {
+      print('No se encontró la raza en petData');
+      hideLoadingOverlay();
+      return;
+    }
+
+    if (widget.petData.containsKey('raza')) {
+      print('Raza de la mascota: ${widget.petData['raza']}');
+    } else {
+      print('No se encontró la raza en petData');
+    }
+
+    final pets = await _getPets(userId, raza);
     if (pets.isEmpty) {
+      hideLoadingOverlay();
+      AppOverlay.showOverlay(
+          context, Colors.orange, "No tienes mascotas de la raza $raza");
       return;
     }
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -176,19 +196,19 @@ class _SendRequestState extends State<SendRequest> {
               actions: [
                 TextButton(
                   onPressed: () {
+                    hideLoadingOverlay();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cerrar'),
+                ),
+                TextButton(
+                  onPressed: () {
                     if (selectedPet != null && selectedPetId != null) {
                       Navigator.of(context).pop();
                       _addRequest(selectedPetId!);
                     }
                   },
                   child: const Text('Aceptar'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    hideLoadingOverlay();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Cerrar'),
                 ),
               ],
             );

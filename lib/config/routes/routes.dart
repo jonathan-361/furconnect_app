@@ -41,7 +41,7 @@ final router = GoRouter(
     GoRoute(
       path: '/chooseImage',
       builder: (context, state) {
-        final userData = state.extra as Map<String, String>;
+        final userData = state.extra as Map<String, String?>;
         return ChooseImage(
           userData: userData,
           registerService: RegisterService(ApiService()),

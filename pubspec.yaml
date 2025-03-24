@@ -51,6 +51,7 @@ flutter:
     - assets/images/logo_furconnect.png
     - assets/images/background_login_copy.png
     - assets/images/placeholder/pet_placeholder.jpg
+    - assets/images/placeholder/avatar.jpg
     - assets/images/placeholder/item_pet_placeholder.jpg
     - assets/images/placeholder/user_placeholder.jpg
     - assets/images/Login/login_asset.jpg

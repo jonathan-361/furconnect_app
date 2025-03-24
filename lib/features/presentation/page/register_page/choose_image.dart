@@ -6,6 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:image/image.dart' as img;
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 
 import 'package:furconnect/features/data/services/register_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -14,7 +16,7 @@ import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
 class ChooseImage extends StatefulWidget {
-  final Map<String, String> userData;
+  final Map<String, String?> userData;
   final RegisterService registerService;
 
   const ChooseImage({
@@ -30,8 +32,6 @@ class ChooseImage extends StatefulWidget {
 class _ChooseImageState extends State<ChooseImage> {
   File? _selectedImage;
   bool _isLoading = false;
-  final String defaultImageUrl =
-      "https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg";
 
   Future<File?> pickImage() async {
     final result = await FilePicker.platform.pickFiles(
@@ -70,7 +70,10 @@ class _ChooseImageState extends State<ChooseImage> {
           await image.readAsBytes(),
           filename: 'image.jpg',
         ),
-        'upload_preset': 'upload_image_flutter',
+        'upload_preset': 'image_user_preset',
+        'folder': 'users',
+        'overwrite': true,
+        'invalidate': true,
       });
 
       final response = await Dio().post(
@@ -92,12 +95,27 @@ class _ChooseImageState extends State<ChooseImage> {
     }
   }
 
+  Future<File> loadImageFromAssets() async {
+    final byteData =
+        await rootBundle.load('assets/images/placeholder/avatar.jpg');
+    final file = File('${(await getTemporaryDirectory()).path}/avatar.jpg');
+    await file.writeAsBytes(byteData.buffer.asUint8List());
+    return file;
+  }
+
   Future<void> register(File? selectedImage, BuildContext context) async {
-    String imageUrl = defaultImageUrl;
+    String imageUrl = '';
     showLoadingOverlay();
 
     if (selectedImage != null) {
       try {
+        File imageToUpload;
+        if (selectedImage != null) {
+          imageToUpload = selectedImage;
+        } else {
+          imageToUpload = await loadImageFromAssets();
+        }
+
         Uint8List compressedImage = await compressImage(selectedImage);
         File compressedFile = File('${selectedImage.path}_compressed.jpg');
         await compressedFile.writeAsBytes(compressedImage);

@@ -8,7 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 
 class PetCard extends StatelessWidget {
   final Map<String, dynamic> petData;

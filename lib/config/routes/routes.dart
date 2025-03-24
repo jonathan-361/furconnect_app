@@ -21,6 +21,7 @@ import 'package:furconnect/features/presentation/page/user_page/edit_user.dart';
 import 'package:furconnect/features/presentation/page/match_page/match.dart';
 import 'package:furconnect/features/presentation/page/profile_page/profile.dart';
 import 'package:furconnect/features/presentation/widget/pet_card_home.dart';
+import 'package:furconnect/features/presentation/page/chat_page/chat_page.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -108,6 +109,18 @@ final router = GoRouter(
       builder: (context, state) => MatchPage(
           requestService:
               RequestService(ApiService(), LoginService(ApiService()))),
+    ),
+    GoRoute(
+      path: '/chat',
+      builder: (context, state) {
+        final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
+
+        final chatId = extra['chatId'] as String;
+        final name = extra['name'] as String? ??
+            'Nombre desconocido'; // Si name es null, usa un valor por defecto
+
+        return ChatPage(chatId: chatId, name: name);
+      },
     ),
   ],
 );

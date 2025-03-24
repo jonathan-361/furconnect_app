@@ -21,7 +21,7 @@ class RegisterService {
   ) async {
     try {
       final response = await _apiService.post(
-        '/users',
+        'api/users',
         data: {
           "imagen": imagen,
           "nombre": nombre,

@@ -7,12 +7,19 @@ import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/data/services/request_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
 class SendRequest extends StatefulWidget {
   final Map<String, dynamic> petData;
-  const SendRequest({super.key, required this.petData});
+  final bool hasSentRequest;
+  final VoidCallback onRequestSent;
+  const SendRequest({
+    super.key,
+    required this.petData,
+    required this.hasSentRequest,
+    required this.onRequestSent,
+  });
 
   @override
   _SendRequestState createState() => _SendRequestState();
@@ -27,6 +34,13 @@ class _SendRequestState extends State<SendRequest> {
   String? selectedPetId;
 
   bool _isLoading = false;
+  bool _hasSentRequest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasSentRequest = widget.hasSentRequest;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,20 +51,22 @@ class _SendRequestState extends State<SendRequest> {
           child: Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: ElevatedButton(
-              onPressed: () {
-                _showRequestDialog();
-              },
+              onPressed: widget.hasSentRequest ? null : _showRequestDialog,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
+                backgroundColor: widget.hasSentRequest
+                    ? Colors.grey
+                    : Theme.of(context).colorScheme.secondary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(200, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Enviar solicitud',
-                style: TextStyle(
+              child: Text(
+                widget.hasSentRequest
+                    ? 'Solicitud enviada'
+                    : 'Enviar solicitud',
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'RobotoR',
@@ -188,6 +204,9 @@ class _SendRequestState extends State<SendRequest> {
     final requestUserId = widget.petData['usuario_id']['_id'] ?? '';
     final requestPetId = widget.petData['_id'];
 
+    print('Mi ID de usuario: $myUserId');
+    print('ID de mi mascota seleccionada: $myPetId');
+
     try {
       final success = await _requestService.addRequest(
         myPetId,
@@ -199,6 +218,7 @@ class _SendRequestState extends State<SendRequest> {
 
       if (mounted) {
         if (success) {
+          widget.onRequestSent(); // Esto actualiza el estado en PetCardHome
           hideLoadingOverlay();
           AppOverlay.showOverlay(
               context, Colors.green, "Solicitud mandada con éxito");

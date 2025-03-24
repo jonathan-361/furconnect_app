@@ -10,11 +10,12 @@ import 'dart:io';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedList.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
 class NewPet extends StatefulWidget {
   const NewPet({super.key});
@@ -27,22 +28,22 @@ class MaxAgeInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    // Convertir el texto a un entero
     final newText = newValue.text;
     if (newText.isNotEmpty && int.tryParse(newText) != null) {
       final int value = int.parse(newText);
-      // Si el valor es mayor que 25, no permitir que se ingrese
       if (value > 25) {
-        return oldValue; // Retorna el valor anterior si es mayor a 25
+        return oldValue;
       }
     }
-    return newValue; // Si está dentro del rango, permite la entrada
+    return newValue;
   }
 }
 
 class _NewPetState extends State<NewPet> {
   final PetService _petService =
       PetService(ApiService(), LoginService(ApiService()));
+  final UserService _userService =
+      UserService(ApiService(), LoginService(ApiService()));
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -535,19 +536,57 @@ class _NewPetState extends State<NewPet> {
     return uploadedUrls;
   }
 
-  Future<bool> _addPet() async {
-    final loginService = LoginService(ApiService());
-    await loginService.loadToken();
-    final token = loginService.authToken;
-    if (token == null) {
-      setState(() {
-        _error = 'No se encontró un token válido.';
-      });
-      return false;
+  Future<String?> _getUserId() async {
+    try {
+      final loginService = LoginService(ApiService());
+      await loginService.loadToken();
+      final token = loginService.authToken;
+
+      if (token == null) {
+        return null;
+      }
+
+      final decodedToken = JwtDecoder.decode(token);
+      return decodedToken['id'];
+    } catch (err) {
+      print('Error al decodificar el token: $err');
+      return null;
+    }
+  }
+
+  Future<Map<String, String>?> getCountryStateCityUser() async {
+    final userId = await _getUserId();
+
+    if (userId == null) {
+      print("No se pudo obtener el ID del usuario.");
+      return null;
     }
 
-    final decodedToken = JwtDecoder.decode(token);
-    final usuarioId = decodedToken['id'];
+    try {
+      final userData = await _userService.getUserById(userId);
+
+      if (userData != null) {
+        final ciudad = userData['ciudad'];
+        final estado = userData['estado'];
+        final pais = userData['pais'];
+
+        return {
+          'pais': pais,
+          'estado': estado,
+          'ciudad': ciudad,
+        };
+      } else {
+        print('No se encontraron datos del usuario.');
+        return null;
+      }
+    } catch (err) {
+      print("Error al obtener los datos del usuario: $err");
+      return null;
+    }
+  }
+
+  Future<bool> _addPet() async {
+    final usuarioId = await _getUserId();
 
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedImages.isEmpty) {
@@ -585,20 +624,33 @@ class _NewPetState extends State<NewPet> {
         List<String> mediaImages =
             imagesPet.length > 1 ? imagesPet.sublist(1) : [];
 
+        String breedText = _breedController.text.toLowerCase();
+        String gender = (selectedGender ?? 'No definido aún').toLowerCase();
+        print('Genero de mi mascota es: $breedText');
+
+        final locationData = await getCountryStateCityUser();
+
+        String ciudad = locationData?['ciudad'] ?? 'Ciudad desconocida';
+        String estado = locationData?['estado'] ?? 'Estado desconocido';
+        String pais = locationData?['pais'] ?? 'País desconocido';
+
         final success = await _petService.addPet(
           mainImage,
           _nameController.text,
-          _breedController.text,
-          'Perro',
+          breedText,
+          'perro',
           _colorController.text,
           selectedSize ?? 'Tamaño desconocido',
           agePet,
-          selectedGender ?? 'No definido aún',
+          gender,
           _hasPedigree,
           vaccines,
           selectedTemperament ?? 'Temperamento desconocido',
-          usuarioId,
+          usuarioId ?? 'Usuario desconocido',
           mediaImages,
+          pais,
+          estado,
+          ciudad,
         );
 
         if (success) {

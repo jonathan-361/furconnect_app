@@ -16,7 +16,7 @@ class UserService {
 
     try {
       final response = await _apiService.get(
-        "/users/$userId",
+        "api/users/$userId",
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -52,7 +52,7 @@ class UserService {
 
     try {
       final response = await _apiService.put(
-        "/users/$userId",
+        "api/users/$userId",
         data: {
           "imagen": imagen,
           "nombre": nombre,

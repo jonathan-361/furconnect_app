@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:furconnect/features/data/services/request_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
-class MyItemRequestSend extends StatelessWidget {
+class MyItemRequestSend extends StatefulWidget {
   final Map<String, dynamic> petData;
   final deleteButton;
   final String requestId;
@@ -21,6 +21,11 @@ class MyItemRequestSend extends StatelessWidget {
     required this.onDelete,
   });
 
+  @override
+  State<MyItemRequestSend> createState() => _MyItemRequestSendState();
+}
+
+class _MyItemRequestSendState extends State<MyItemRequestSend> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -43,7 +48,8 @@ class MyItemRequestSend extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        _formatWord(petData['nombre']),
+                        _formatWord(
+                            widget.petData['nombre'] ?? 'Nombre no disponible'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: _getResponsiveFontSize(context, 20),
@@ -54,7 +60,7 @@ class MyItemRequestSend extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    _formatWord(petData['raza']),
+                    _formatWord(widget.petData['raza']),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: _getResponsiveFontSize(context, 16),
@@ -67,7 +73,7 @@ class MyItemRequestSend extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildButton(
-                          text: deleteButton,
+                          text: widget.deleteButton,
                           onPressed: () {
                             _deleteRequest(context);
                           },
@@ -82,22 +88,22 @@ class MyItemRequestSend extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => context.pushNamed('petCardHome', extra: {
-          'petData': petData,
-          'source': 'requestSend',
-          'requestId': requestId,
-          'onDelete': () {
-            print('codigo innecesariamente necesario');
-          },
-        }),
+        onTap: () {
+          context.pushNamed('petCardHome', extra: {
+            'petData': widget.petData,
+            'source': 'requestSend',
+            'requestId': widget.requestId,
+            'onDelete': widget.onDelete,
+          });
+        },
       ),
     );
   }
 
   void _deleteRequest(BuildContext context) async {
     try {
-      onDelete();
-      await requestService.deleteRequest(requestId);
+      widget.onDelete();
+      await widget.requestService.deleteRequest(widget.requestId);
       AppOverlay.showOverlay(
           context, Colors.green, "Solicitud eliminada éxitosamente");
     } catch (err) {
@@ -109,9 +115,10 @@ class MyItemRequestSend extends StatelessWidget {
   Widget _buildImage() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: petData['imagen'] != null && petData['imagen']!.isNotEmpty
+      child: widget.petData['imagen'] != null &&
+              widget.petData['imagen']!.isNotEmpty
           ? Image.network(
-              petData['imagen']!.trim(),
+              widget.petData['imagen']!.trim(),
               width: 90,
               height: 90,
               fit: BoxFit.cover,
@@ -128,7 +135,7 @@ class MyItemRequestSend extends StatelessWidget {
   Widget _buildButton({
     required String text,
     required VoidCallback onPressed,
-    Color buttonColor = Colors.blue,
+    Color buttonColor = Colors.red,
     double buttonSize = 13,
   }) {
     return ElevatedButton(

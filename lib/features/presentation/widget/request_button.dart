@@ -4,8 +4,8 @@ import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/request_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
 class RequestButton extends StatefulWidget {
   final Map<String, dynamic> petData;
@@ -77,10 +77,8 @@ class _RequestButtonState extends State<RequestButton> {
       AppOverlay.showOverlay(
           context, Colors.green, "Solicitud eliminada éxitosamente");
 
-      // Llama a onDelete para recargar las solicitudes en MatchPage
       widget.onDelete();
 
-      // Cierra la pantalla actual después de que onDelete haya terminado
       Navigator.pop(context, true);
     } catch (err) {
       AppOverlay.showOverlay(

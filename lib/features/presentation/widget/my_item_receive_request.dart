@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:furconnect/features/data/services/request_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
-class MyItemReceiveRequest extends StatelessWidget {
+class MyItemReceiveRequest extends StatefulWidget {
   final Map<String, dynamic> petData;
   final acceptButton;
   final rejectButton;
   final String requestId;
   final RequestService requestService;
+  final VoidCallback onRequestHandled;
 
   const MyItemReceiveRequest({
     super.key,
@@ -19,8 +20,14 @@ class MyItemReceiveRequest extends StatelessWidget {
     required this.rejectButton,
     required this.requestId,
     required this.requestService,
+    required this.onRequestHandled,
   });
 
+  @override
+  State<MyItemReceiveRequest> createState() => _MyItemReceiveRequestState();
+}
+
+class _MyItemReceiveRequestState extends State<MyItemReceiveRequest> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -43,7 +50,7 @@ class MyItemReceiveRequest extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        _formatWord(petData['nombre']),
+                        _formatWord(widget.petData['nombre']),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: _getResponsiveFontSize(context, 20),
@@ -54,7 +61,7 @@ class MyItemReceiveRequest extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    _formatWord(petData['raza']),
+                    _formatWord(widget.petData['raza']),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: _getResponsiveFontSize(context, 16),
@@ -67,8 +74,10 @@ class MyItemReceiveRequest extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildButton(
-                          text: acceptButton,
-                          onPressed: () {},
+                          text: widget.acceptButton,
+                          onPressed: () {
+                            _acceptRequest(context);
+                          },
                           buttonColor: Colors.green,
                           buttonSize: _getResponsiveFontSize(context, 14),
                         ),
@@ -76,8 +85,10 @@ class MyItemReceiveRequest extends StatelessWidget {
                       SizedBox(width: 15),
                       Expanded(
                         child: _buildButton(
-                          text: rejectButton,
-                          onPressed: () {},
+                          text: widget.rejectButton,
+                          onPressed: () {
+                            _rejectRequest(context);
+                          },
                           buttonColor: Colors.red,
                           buttonSize: _getResponsiveFontSize(context, 14),
                         ),
@@ -90,12 +101,10 @@ class MyItemReceiveRequest extends StatelessWidget {
           ],
         ),
         onTap: () => context.pushNamed('petCardHome', extra: {
-          'petData': petData,
+          'petData': widget.petData,
           'source': 'requestReceive',
-          'requestId': requestId,
-          'onDelete': () {
-            print('codigo innecesariamente necesario');
-          },
+          'requestId': widget.requestId,
+          'onDelete': widget.onRequestHandled,
         }),
       ),
     );
@@ -104,9 +113,10 @@ class MyItemReceiveRequest extends StatelessWidget {
   Widget _buildImage() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: petData['imagen'] != null && petData['imagen']!.isNotEmpty
+      child: widget.petData['imagen'] != null &&
+              widget.petData['imagen']!.isNotEmpty
           ? Image.network(
-              petData['imagen']!.trim(),
+              widget.petData['imagen']!.trim(),
               width: 90,
               height: 90,
               fit: BoxFit.cover,
@@ -154,6 +164,28 @@ class MyItemReceiveRequest extends StatelessWidget {
       return baseSize * 0.8;
     }
     return baseSize;
+  }
+
+  void _acceptRequest(BuildContext context) async {
+    try {
+      await widget.requestService.acceptRequest(widget.requestId);
+      widget.onRequestHandled();
+      AppOverlay.showOverlay(
+          context, Colors.green, "Solicitud aceptada éxitosamente");
+    } catch (err) {
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al aceptar la solicitud: $err");
+    }
+  }
+
+  void _rejectRequest(BuildContext context) async {
+    try {
+      await widget.requestService.rejectRequest(widget.requestId);
+      widget.onRequestHandled();
+    } catch (err) {
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al rechazar la solicitud: $err");
+    }
   }
 
   String _formatWord(String word) {

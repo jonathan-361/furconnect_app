@@ -18,7 +18,7 @@ class PetService {
 
     try {
       final response = await _apiService.get(
-        '/pets',
+        'api/pets',
         queryParams: {'page': page, 'limit': limit},
         headers: {
           'Authorization': 'Bearer $token',
@@ -48,7 +48,7 @@ class PetService {
     }
   }
 
-  Future<List<dynamic>?> getPetsFilter(
+  Future<List<dynamic>> getPetsFilter(
     int page,
     int limit,
     String raza,
@@ -62,8 +62,13 @@ class PetService {
 
     try {
       final response = await _apiService.get(
-        '/pets/search',
-        queryParams: {'page': page, 'limit': limit, 'raza': raza, 'sexo': sexo},
+        'api/pets/search',
+        queryParams: {
+          'page': page,
+          'limit': limit,
+          'raza': raza,
+          'sexo': sexo,
+        },
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -101,7 +106,7 @@ class PetService {
 
     try {
       final response = await _apiService.get(
-        '/pets/$petId',
+        'api/pets/$petId',
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -126,7 +131,7 @@ class PetService {
 
     try {
       final response = await _apiService.get(
-        '/pets/owner/$ownerId',
+        'api/pets/owner/$ownerId',
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -166,6 +171,9 @@ class PetService {
     String temperamento,
     String usuarioId,
     List<String> media,
+    String pais,
+    String estado,
+    String ciudad,
   ) async {
     final token = await _loginService.getToken();
 
@@ -175,7 +183,7 @@ class PetService {
 
     try {
       final response = await _apiService.post(
-        '/pets',
+        'api/pets',
         data: {
           "imagen": imagen,
           "nombre": nombre,
@@ -190,6 +198,9 @@ class PetService {
           "temperamento": temperamento,
           "usuario_id": usuarioId,
           "media": media,
+          "pais": pais,
+          "estado": estado,
+          "ciudad": ciudad
         },
         headers: {
           'Authorization': 'Bearer $token',
@@ -231,7 +242,7 @@ class PetService {
 
     try {
       final response = await _apiService.put(
-        '/pets/$petId',
+        'api/pets/$petId',
         data: {
           "nombre": nombre,
           "raza": raza,
@@ -271,7 +282,7 @@ class PetService {
 
     try {
       final response = await _apiService.delete(
-        '/pets/$petId',
+        'api/pets/$petId',
         headers: {
           'Authorization': 'Bearer $token',
         },

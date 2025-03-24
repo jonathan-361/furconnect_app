@@ -18,7 +18,7 @@ class RequestService {
 
     try {
       final response = await _apiService.get(
-        '/solicitudes/enviadas/todas',
+        'api/solicitudes/enviadas/todas',
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -53,7 +53,7 @@ class RequestService {
 
     try {
       final response = await _apiService.get(
-        '/solicitudes/recibidas',
+        'api/solicitudes/recibidas',
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -94,7 +94,7 @@ class RequestService {
 
     try {
       final response = await _apiService.post(
-        '/solicitudes',
+        'api/solicitudes',
         data: {
           "mascota_solicitante_id": mascotaUsuarioId,
           "usuario_solicitante_id": usuarioId,
@@ -119,6 +119,64 @@ class RequestService {
     }
   }
 
+  Future<bool> acceptRequest(String requestId) async {
+    final token = await _loginService.getToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+    try {
+      final response = await _apiService.put(
+        'api/solicitudes/$requestId/estado',
+        data: {
+          "estado": "aceptado",
+        },
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Solicitud aceptada exitosamente.");
+        return true;
+      } else {
+        throw Exception(
+            "Error al aceptar la solicitud: ${response.statusMessage}");
+      }
+    } on DioException catch (err) {
+      throw Exception("Error al aceptar de la solicitud: ${err.message}");
+    }
+  }
+
+  Future<bool> rejectRequest(String requestId) async {
+    final token = await _loginService.getToken();
+
+    if (!_loginService.isAuthenticated()) {
+      throw Exception("No se encuentra autenticado. Inicie sesión.");
+    }
+    try {
+      final response = await _apiService.put(
+        'api/solicitudes/$requestId/estado',
+        data: {
+          "estado": "rechazado",
+        },
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Solicitud aceptada exitosamente.");
+        return true;
+      } else {
+        throw Exception(
+            "Error al aceptar la solicitud: ${response.statusMessage}");
+      }
+    } on DioException catch (err) {
+      throw Exception("Error al aceptar de la solicitud: ${err.message}");
+    }
+  }
+
   Future<void> deleteRequest(String requestId) async {
     final token = await _loginService.getToken();
 
@@ -128,7 +186,7 @@ class RequestService {
 
     try {
       final response = await _apiService.delete(
-        '/solicitudes/$requestId/',
+        'api/solicitudes/$requestId/',
         headers: {
           'Authorization': 'Bearer $token',
         },

@@ -4,8 +4,8 @@ import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/request_service.dart';
-import 'package:furconnect/features/presentation/widget/overlay.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
 class ReceiveButton extends StatefulWidget {
   final Map<String, dynamic> petData;
@@ -48,6 +48,7 @@ class _ReceiveButtonState extends State<ReceiveButton> {
                 ElevatedButton(
                   onPressed: () {
                     print('Request ID: ${widget.requestId}');
+                    _acceptRequest(context);
                     // Agrega la acción para el primer botón aquí
                   },
                   style: ElevatedButton.styleFrom(
@@ -72,6 +73,7 @@ class _ReceiveButtonState extends State<ReceiveButton> {
                 ElevatedButton(
                   onPressed: () {
                     print('Second button pressed!');
+                    _rejectRequest(context);
                     // Agrega la acción para el segundo botón aquí
                   },
                   style: ElevatedButton.styleFrom(
@@ -98,6 +100,38 @@ class _ReceiveButtonState extends State<ReceiveButton> {
         if (_isLoading) const LoadingOverlay(),
       ],
     );
+  }
+
+  Future<void> _acceptRequest(BuildContext context) async {
+    showLoadingOverlay();
+    try {
+      await _requestService.acceptRequest(widget.requestId);
+      widget.onDelete();
+      Navigator.pop(context); // Retrocede a la página anterior
+      AppOverlay.showOverlay(
+          context, Colors.green, "Solicitud aceptada éxitosamente");
+    } catch (err) {
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al aceptar la solicitud: $err");
+    } finally {
+      hideLoadingOverlay();
+    }
+  }
+
+  Future<void> _rejectRequest(BuildContext context) async {
+    showLoadingOverlay();
+    try {
+      await _requestService.rejectRequest(widget.requestId);
+      widget.onDelete();
+      Navigator.pop(context); // Retrocede a la página anterior
+      AppOverlay.showOverlay(
+          context, Colors.red, "Solicitud rechazada éxitosamente");
+    } catch (err) {
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al rechazar la solicitud: $err");
+    } finally {
+      hideLoadingOverlay();
+    }
   }
 
   void showLoadingOverlay() {

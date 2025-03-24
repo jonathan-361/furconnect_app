@@ -10,7 +10,7 @@ class LoginService {
 
   Future<String?> login(String email, String password) async {
     final response = await _apiService.post(
-      "/login",
+      "api/login",
       data: {
         "email": email,
         "password": password,

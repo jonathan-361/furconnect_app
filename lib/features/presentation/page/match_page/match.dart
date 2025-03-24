@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:furconnect/features/data/services/request_service.dart';
+
 import 'package:furconnect/features/presentation/widget/item_request_pet.dart';
 import 'package:furconnect/features/presentation/widget/my_item_request_send.dart';
 import 'package:furconnect/features/presentation/widget/my_item_receive_request.dart';
-import 'package:furconnect/features/presentation/widget/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
+import 'package:furconnect/features/presentation/widget/pet_card_home.dart';
 
 class MatchPage extends StatefulWidget {
   final RequestService requestService;
@@ -24,6 +26,10 @@ class _MatchPageState extends State<MatchPage> {
     super.initState();
     _loadSendRequest();
     _loadReceiveRequest();
+  }
+
+  Future<void> _reloadReceiveRequests() async {
+    await _loadReceiveRequest();
   }
 
   @override
@@ -64,6 +70,7 @@ class _MatchPageState extends State<MatchPage> {
                             rejectButton: 'Rechazar',
                             requestId: request['_id'].toString(),
                             requestService: widget.requestService,
+                            onRequestHandled: _reloadReceiveRequests,
                           );
                         },
                       ),
@@ -72,12 +79,28 @@ class _MatchPageState extends State<MatchPage> {
                         itemCount: sendRequests.length,
                         itemBuilder: (context, index) {
                           var request = sendRequests[index];
-                          return MyItemRequestSend(
-                            petData: request['mascota_solicitante_id'],
-                            deleteButton: 'Borrar solicitud',
-                            requestId: request['_id'].toString(),
-                            requestService: widget.requestService,
-                            onDelete: _deleteRequestHandler,
+                          return GestureDetector(
+                            onTap: () {
+                              // Navegar a PetCardHome cuando se toca un elemento de la lista
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PetCardHome(
+                                    petData: request['mascota_solicitante_id'],
+                                    source: 'requestSend',
+                                    requestId: request['_id'].toString(),
+                                    onDelete: _deleteRequestHandler,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: MyItemRequestSend(
+                              petData: request['mascota_solicitante_id'],
+                              deleteButton: 'Borrar solicitud',
+                              requestId: request['_id'].toString(),
+                              requestService: widget.requestService,
+                              onDelete: _deleteRequestHandler,
+                            ),
                           );
                         },
                       ),
@@ -94,15 +117,19 @@ class _MatchPageState extends State<MatchPage> {
   }
 
   void showLoadingOverlay() {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
   }
 
   void hideLoadingOverlay() {
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _deleteRequestHandler() async {
@@ -117,7 +144,9 @@ class _MatchPageState extends State<MatchPage> {
     try {
       final requests = await widget.requestService.getSendRequest();
       final pendingRequests = requests
-          .where((request) => request['estado'] == 'pendiente')
+          .where((request) =>
+              request['estado'] == 'pendiente' &&
+              request['mascota_solicitante_id'] != null)
           .toList();
 
       setState(() {

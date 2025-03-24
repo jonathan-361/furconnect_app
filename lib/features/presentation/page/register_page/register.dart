@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:furconnect/features/presentation/widget/overlay.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 
 class Register extends StatefulWidget {
   Register({super.key});

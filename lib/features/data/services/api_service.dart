@@ -8,7 +8,7 @@ class ApiService {
   ApiService()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: "https://furconnect.onrender.com/api/",
+            baseUrl: "https://furconnect.onrender.com/",
             // baseUrl: "https://furconnect-api-copy-v2.onrender.com/api/",
             connectTimeout: const Duration(seconds: 60),
             receiveTimeout: const Duration(seconds: 60),

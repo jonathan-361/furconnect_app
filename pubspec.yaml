@@ -29,6 +29,7 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   flutter_svg: ^2.0.17
   cached_network_image: ^3.4.1
+  socket_io_client: ^3.0.2
 
 
 
@@ -45,6 +46,7 @@ dev_dependencies:
 flutter:
   assets:
     - .env
+    - assets/json/countries/countries.json
     - assets/images/logo_furconnect.png
     - assets/images/background_login_copy.png
     - assets/images/placeholder/pet_placeholder.jpg
@@ -53,6 +55,9 @@ flutter:
     - assets/images/Login/login_asset.jpg
     - assets/images/Login/pet2.jpg
     - assets/images/svg/pet.svg
+    - assets/images/svg/send-plane-2-line.svg
+    - assets/images/svg/emotion-happy-line.svg
+    - assets/images/svg/attachment-2.svg
 
   fonts:
     - family: Nunito

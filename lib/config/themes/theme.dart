@@ -6,7 +6,7 @@ class AppTheme {
       seedColor: const Color.fromARGB(223, 165, 68, 22),
     ).copyWith(
       primary: Color.fromARGB(223, 165, 68, 22),
-      secondary: const Color.fromARGB(255, 228, 121, 59),
+      secondary: const Color.fromARGB(255, 201, 134, 60),
       surface: Colors.white,
     );
 

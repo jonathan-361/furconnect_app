@@ -43,18 +43,22 @@ class _MyPetsState extends State<MyPets> {
     if (userId != null) {
       try {
         final petsData = await _petService.getPetsByOwner(userId);
-        setState(() {
-          _pets = petsData;
-          hasPets = petsData.isNotEmpty;
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _pets = petsData;
+            hasPets = petsData.isNotEmpty;
+            isLoading = false;
+          });
+        }
       } catch (err) {
-        setState(() {
-          hasPets = err.toString().contains("No tienes mascotas todavía")
-              ? false
-              : hasPets;
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            hasPets = err.toString().contains("No tienes mascotas todavía")
+                ? false
+                : hasPets;
+            isLoading = false;
+          });
+        }
         print('Error al obtener las mascotas: $err');
       }
     } else {

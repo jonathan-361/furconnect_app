@@ -52,4 +52,8 @@ class SocketService {
       callback(data);
     });
   }
+
+  void joinRoom(String chatRoomId) {
+    _socket.emit('joinRoom', chatRoomId);
+  }
 }

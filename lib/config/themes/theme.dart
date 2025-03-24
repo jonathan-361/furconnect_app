@@ -7,6 +7,7 @@ class AppTheme {
     ).copyWith(
       primary: Color.fromARGB(223, 165, 68, 22),
       secondary: const Color.fromARGB(255, 201, 134, 60),
+      tertiary: const Color.fromARGB(117, 201, 133, 60),
       surface: Colors.white,
     );
 

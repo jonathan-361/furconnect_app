@@ -3,6 +3,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/presentation/page/chat_page/chat_page.dart';
 
 class ItemChat extends StatelessWidget {
   final Map<String, dynamic> chat;
@@ -68,14 +69,12 @@ class ItemChat extends StatelessWidget {
         final String otherUserName = _getOtherUserName(usuarios, userId);
 
         // Obtener el último mensaje
-        String messagePrefix = "¡Nuevo chat!";
+        String messagePrefix = "¡Comienza la conversación!";
         if (mensajes.isNotEmpty) {
           final lastMessage = mensajes.last;
           final String sender = lastMessage['sender'] ?? "";
           final String content =
               lastMessage['content'] ?? "Mensaje sin contenido";
-
-          // Determinar si el mensaje lo enviaste tú o el otro usuario
           if (sender == userId) {
             messagePrefix = "Tú: $content";
           } else {
@@ -90,7 +89,18 @@ class ItemChat extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          onTap: onTap,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatPage(
+                  chatId: chat[
+                      '_id'], // Asegúrate de que 'chat' tenga un campo '_id'
+                  name: otherUserName, // Pasar el nombre del chat
+                ),
+              ),
+            );
+          },
         );
       },
     );

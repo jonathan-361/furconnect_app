@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/chat_service.dart';
 import 'package:furconnect/features/data/services/socket_service.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:furconnect/features/presentation/page/chat_page/emoji.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -38,6 +40,7 @@ class _ChatPageState extends State<ChatPage> {
   int _currentPage = 1; // Start from page 1
   int _pageSize = 10;
   bool _hasMoreMessages = true;
+  bool _emojiShowing = false;
 
   @override
   void initState() {
@@ -46,11 +49,12 @@ class _ChatPageState extends State<ChatPage> {
     _socketService.connect();
     _initializeChat();
 
+    _socketService.joinRoom(widget.chatId);
+
     // Listen for new messages
     _socketService.onReceiveMessage((message) {
       setState(() {
-        _messages.insert(0,
-            message); // Add new message at the beginning since list is reversed
+        _messages.insert(0, message);
       });
     });
 
@@ -74,23 +78,21 @@ class _ChatPageState extends State<ChatPage> {
       final newMessage = {
         'sender': _userId,
         'content': message,
-        'timestamp':
-            DateTime.now().toIso8601String(), // Add timestamp for ordering
+        'timestamp': DateTime.now().toIso8601String(),
       };
 
-      // Add message to list
+      // Agregar el mensaje a la lista local
       setState(() {
-        _messages.insert(
-            0, newMessage); // Insert at beginning for reversed list
+        _messages.insert(0, newMessage);
       });
 
-      // Send via WebSocket
+      // Enviar el mensaje a través del socket
       _socketService.sendMessage(widget.chatId, _userId!, message);
 
-      // Clear text field
+      // Limpiar el campo de texto
       _messageController.clear();
 
-      // Scroll to bottom (top in reversed list)
+      // Desplazarse al final de la lista (inicio en lista invertida)
       _scrollToBottom();
     }
   }
@@ -204,6 +206,13 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  bool _isMessageFromCurrentUser(Map<String, dynamic> message) {
+    final senderId = message['sender'] is String
+        ? message['sender']
+        : message['sender']['_id'];
+    return senderId == _userId;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -243,127 +252,134 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoadingMessage && _messages.isEmpty
-                ? Center(child: CircularProgressIndicator())
-                : Stack(
-                    children: [
-                      ListView.builder(
-                        controller: _scrollController,
-                        reverse: true, // Show newest messages at the bottom
-                        padding: EdgeInsets.all(10),
-                        itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          // Show loading indicator at the end (top of reversed list)
-                          if (_isLoadingMore && index == _messages.length) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(),
+      body: Container(
+        color: theme.colorScheme.tertiary,
+        height: double.infinity,
+        child: Column(
+          children: [
+            Expanded(
+              child: _isLoadingMessage && _messages.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : Stack(
+                      children: [
+                        ListView.builder(
+                          controller: _scrollController,
+                          reverse: true, // Show newest messages at the bottom
+                          padding: EdgeInsets.all(10),
+                          itemCount:
+                              _messages.length + (_isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            // Show loading indicator at the end (top of reversed list)
+                            if (_isLoadingMore && index == _messages.length) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+
+                            final message = _messages[index];
+                            final isSender = _isMessageFromCurrentUser(message);
+
+                            return Align(
+                              alignment: isSender
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: _ChatBubble(
+                                message: message['content'],
+                                isSender: isSender,
                               ),
                             );
-                          }
-
-                          final message = _messages[index];
-                          final isSender = message['sender'] == _userId;
-
-                          return Align(
-                            alignment: isSender
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: _ChatBubble(
-                              message: message['content'],
-                              isSender: isSender,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                          },
+                        ),
+                      ],
+                    ),
+            ),
+            Offstage(
+              offstage: !_emojiShowing,
+              child: EmojiPickerWidget(
+                textEditingController: _messageController,
+                onEmojiSelected: () {
+                  // Lógica adicional si es necesario
+                },
               ),
             ),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: SvgPicture.asset(
-                    addFile,
-                    height: 25,
-                    width: 25,
-                    colorFilter: ColorFilter.mode(
-                        theme.colorScheme.secondary, BlendMode.srcIn),
-                  ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey[300]!, width: 1.5),
                 ),
-                SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {},
-                  child: SvgPicture.asset(
-                    happyEmote,
-                    height: 25,
-                    width: 25,
-                    colorFilter: ColorFilter.mode(
-                        theme.colorScheme.secondary, BlendMode.srcIn),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      hintStyle: TextStyle(fontSize: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.secondary,
-                          width: 1.5,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.secondary,
-                          width: 1.5,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.secondary,
-                          width: 2,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _emojiShowing = !_emojiShowing;
+                      });
+                    },
+                    child: SvgPicture.asset(
+                      happyEmote,
+                      height: 25,
+                      width: 25,
+                      colorFilter: ColorFilter.mode(
+                          theme.colorScheme.secondary, BlendMode.srcIn),
                     ),
                   ),
-                ),
-                SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _sendMessage,
-                  child: SvgPicture.asset(
-                    send,
-                    height: 25,
-                    width: 25,
-                    colorFilter: ColorFilter.mode(
-                        theme.colorScheme.secondary, BlendMode.srcIn),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'Escribe un mensaje...',
+                        hintStyle: TextStyle(fontSize: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.secondary,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.secondary,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.secondary,
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _sendMessage,
+                    child: SvgPicture.asset(
+                      send,
+                      height: 25,
+                      width: 25,
+                      colorFilter: ColorFilter.mode(
+                          theme.colorScheme.secondary, BlendMode.srcIn),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

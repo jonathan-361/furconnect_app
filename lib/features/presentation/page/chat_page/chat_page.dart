@@ -9,6 +9,7 @@ import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/chat_service.dart';
 import 'package:furconnect/features/data/services/socket_service.dart';
 import 'package:furconnect/features/presentation/page/chat_page/emoji.dart';
+import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 
 class ChatPage extends StatefulWidget {
   final String chatId;
@@ -57,9 +58,16 @@ class _ChatPageState extends State<ChatPage> {
     _socketService.joinRoom(widget.chatId);
 
     _socketService.onReceiveMessage((message) {
-      setState(() {
-        _messages.insert(0, message);
-      });
+      if (mounted) {
+        if (message['sender'] != _userId) {
+          setState(() {
+            _messages.insert(0, message);
+            if (_isLoadingMessage) {
+              _isLoadingMessage = false;
+            }
+          });
+        }
+      }
     });
 
     // Listen for scroll events
@@ -113,24 +121,37 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() {
     final message = _messageController.text.trim();
     if (message.isNotEmpty && _userId != null) {
+      final tempMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+
       final newMessage = {
         'sender': _userId,
         'content': message,
         'timestamp': DateTime.now().toIso8601String(),
+        'tempId': tempMessageId,
       };
 
-      if (mounted) {
-        setState(() {
-          _messages.insert(0, newMessage);
-          _draftMessage = '';
-          _messageController.clear();
-        });
-      }
+      setState(() {
+        _messages.insert(0, newMessage);
+        _messageController.clear();
+        _isLoadingMessage = false;
+      });
 
-      _socketService.sendMessage(widget.chatId, _userId!, message);
-      _messageController.clear();
-      _clearDraftMessage();
-      _scrollToBottom();
+      try {
+        _socketService.sendMessage(
+            widget.chatId, _userId!, message, tempMessageId);
+        _messageController.clear();
+        _clearDraftMessage();
+        _scrollToBottom();
+      } catch (err) {
+        if (mounted) {
+          setState(() {
+            _messages.removeWhere((msg) => msg['tempId'] == tempMessageId);
+          });
+          AppOverlay.showOverlay(
+              context, Colors.red, "Error al enviar el mensaje");
+          print('Error al enviar el mensaje $err');
+        }
+      }
     }
   }
 
@@ -160,7 +181,7 @@ class _ChatPageState extends State<ChatPage> {
       final chatData = await chatService.getChatById(widget.chatId);
       if (chatData != null && chatData['mensajes'] != null) {
         final allMessages =
-            List<Map<String, dynamic>>.from(chatData['mensajes']);
+            List<Map<String, dynamic>>.from(chatData['mensajes'] ?? []);
 
         if (allMessages.isEmpty) {
           if (mounted) {
@@ -180,11 +201,9 @@ class _ChatPageState extends State<ChatPage> {
           return bTime.compareTo(aTime);
         });
 
-        // Calculate pagination
         final int startIndex = (_currentPage - 1) * _pageSize;
         final int endIndex = startIndex + _pageSize;
 
-        // Check if we've reached the end
         if (startIndex >= allMessages.length) {
           if (mounted) {
             setState(() {
@@ -225,6 +244,7 @@ class _ChatPageState extends State<ChatPage> {
     } finally {
       if (mounted) {
         setState(() {
+          _isLoadingMessage = false;
           _isLoadingMore = false;
         });
       }
@@ -232,7 +252,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _onScroll() {
-    // When reaching the bottom of the list (since it's reversed, this is for older messages)
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 100 &&
         !_isLoadingMore &&
@@ -265,6 +284,48 @@ class _ChatPageState extends State<ChatPage> {
         ? message['sender']
         : message['sender']['_id'];
     return senderId == _userId;
+  }
+
+  String _formatDate(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Widget _buildDateSeparator(String date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: Color.fromARGB(166, 43, 26, 9),
+              thickness: 1,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              date,
+              style: TextStyle(
+                color: Color.fromARGB(166, 43, 26, 9),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              color: Color.fromARGB(166, 43, 26, 9),
+              thickness: 1,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -346,6 +407,9 @@ class _ChatPageState extends State<ChatPage> {
                               itemCount:
                                   _messages.length + (_isLoadingMore ? 1 : 0),
                               itemBuilder: (context, index) {
+                                if (_messages.isEmpty) {
+                                  return SizedBox.shrink();
+                                }
                                 if (_isLoadingMore &&
                                     index == _messages.length) {
                                   return Center(
@@ -359,15 +423,38 @@ class _ChatPageState extends State<ChatPage> {
                                 final message = _messages[index];
                                 final isSender =
                                     _isMessageFromCurrentUser(message);
+                                final currentDate =
+                                    _formatDate(message['timestamp'] ?? '');
 
-                                return Align(
-                                  alignment: isSender
-                                      ? Alignment.centerRight
-                                      : Alignment.centerLeft,
-                                  child: _ChatBubble(
-                                    message: message['content'],
-                                    isSender: isSender,
-                                  ),
+                                Widget? dateSeparator;
+                                if (index == _messages.length - 1) {
+                                  // Es el primer mensaje (último en la lista invertida)
+                                  dateSeparator =
+                                      _buildDateSeparator(currentDate);
+                                } else {
+                                  final nextMessage = _messages[index + 1];
+                                  final nextDate = _formatDate(
+                                      nextMessage['timestamp'] ?? '');
+                                  if (currentDate != nextDate) {
+                                    dateSeparator =
+                                        _buildDateSeparator(currentDate);
+                                  }
+                                }
+
+                                return Column(
+                                  children: [
+                                    if (dateSeparator != null) dateSeparator,
+                                    Align(
+                                      alignment: isSender
+                                          ? Alignment.centerRight
+                                          : Alignment.centerLeft,
+                                      child: _ChatBubble(
+                                        message: message['content'],
+                                        isSender: isSender,
+                                        timeStamp: message['timestamp'] ?? '',
+                                      ),
+                                    ),
+                                  ],
                                 );
                               },
                             ),
@@ -473,38 +560,104 @@ class _ChatPageState extends State<ChatPage> {
 class _ChatBubble extends StatelessWidget {
   final String message;
   final bool isSender;
+  final String timeStamp;
 
   const _ChatBubble({
     required this.message,
     required this.isSender,
+    required this.timeStamp,
   });
+
+  String _formatTime(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      margin: EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-        color: isSender ? Color.fromARGB(255, 153, 91, 62) : Colors.grey[300],
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-          bottomLeft: isSender ? Radius.circular(20) : Radius.circular(5),
-          bottomRight: isSender ? Radius.circular(5) : Radius.circular(20),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 16,
-              color: isSender ? Colors.white : Colors.black,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxBubbleWidth = screenWidth * 0.75;
+    final minBubbleWidth = 80.0; // Ancho mínimo para mensajes cortos
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calcular el ancho necesario para el texto
+        final textSpan = TextSpan(
+          text: message,
+          style: TextStyle(
+            fontSize: 16,
+            color: isSender ? Colors.white : Colors.black,
+          ),
+        );
+
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        )..layout(
+            maxWidth: maxBubbleWidth - 30); // Restamos el padding horizontal
+
+        // Calcular el ancho necesario considerando múltiples líneas
+        final textWidth = textPainter.size.width + 30; // Añadimos el padding
+        final textHeight = textPainter.size.height;
+
+        // Determinar el ancho del bubble
+        double bubbleWidth;
+        if (textHeight > 20) {
+          // Si el texto tiene múltiples líneas, usar el ancho máximo
+          bubbleWidth = maxBubbleWidth;
+        } else {
+          // Para texto de una línea, usar el ancho del texto o el mínimo
+          bubbleWidth = textWidth > minBubbleWidth ? textWidth : minBubbleWidth;
+        }
+
+        return Container(
+          constraints: BoxConstraints(
+            maxWidth: maxBubbleWidth,
+            minWidth: minBubbleWidth,
+          ),
+          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          margin: EdgeInsets.only(bottom: 15),
+          decoration: BoxDecoration(
+            color:
+                isSender ? Color.fromARGB(255, 153, 91, 62) : Colors.grey[300],
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+              bottomLeft: isSender ? Radius.circular(20) : Radius.circular(5),
+              bottomRight: isSender ? Radius.circular(5) : Radius.circular(20),
             ),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment:
+                isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isSender ? Colors.white : Colors.black,
+                ),
+                softWrap: true,
+              ),
+              SizedBox(height: 4),
+              Text(
+                _formatTime(timeStamp),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSender
+                      ? Colors.white.withOpacity(0.7)
+                      : Colors.black.withOpacity(0.5),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 
@@ -54,6 +53,8 @@ class PetService {
     String raza,
     String sexo,
     String edad,
+    String estado,
+    String pais,
   ) async {
     final token = await _loginService.getToken();
 
@@ -70,6 +71,8 @@ class PetService {
           'raza': raza,
           'sexo': sexo,
           'edad': edad,
+          'estado': estado,
+          'pais': pais,
         },
         headers: {
           'Authorization': 'Bearer $token',

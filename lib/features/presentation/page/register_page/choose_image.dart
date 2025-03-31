@@ -7,7 +7,6 @@ import 'package:image/image.dart' as img;
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 
 import 'package:furconnect/features/data/services/register_service.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
@@ -34,165 +33,174 @@ class _ChooseImageState extends State<ChooseImage> {
   bool _isLoading = false;
 
   Future<File?> pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      return File(result.files.single.path!);
-    }
-    return null;
-  }
-
-  Future<Uint8List> compressImage(File imageFile) async {
-    final image = img.decodeImage(await imageFile.readAsBytes())!;
-    final resizedImage = img.copyResize(image, width: 800);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
-
-    if (compressedImageBytes.length > 400 * 1024) {
-      return compressImageWithLowerQuality(image);
-    }
-
-    return compressedImageBytes;
-  }
-
-  Future<Uint8List> compressImageWithLowerQuality(img.Image image) async {
-    final resizedImage = img.copyResize(image, width: 600);
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 70);
-    return compressedImageBytes;
-  }
-
-  Future<String?> uploadImageDio(File image) async {
     try {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromBytes(
-          await image.readAsBytes(),
-          filename: 'image.jpg',
-        ),
-        'upload_preset': 'image_user_preset',
-        'folder': 'users',
-        'overwrite': true,
-        'invalidate': true,
-      });
-
-      final response = await Dio().post(
-        'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
-        data: formData,
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
       );
 
-      if (response.statusCode == 200) {
-        final imageUrl = response.data['secure_url'];
-        print('Imagen subida con éxito: $imageUrl');
-        return imageUrl;
-      } else {
-        print('Error al subir la imagen: ${response.statusMessage}');
-        return null;
+      if (result != null && result.files.isNotEmpty) {
+        return File(result.files.single.path!);
       }
-    } catch (e) {
-      print('Excepción al subir imagen: $e');
+      return null;
+    } catch (err) {
+      print('Error al seleccionar imagen: $err');
+      AppOverlay.showOverlay(
+          context, Colors.red, "Error al seleccionar imagen");
       return null;
     }
   }
 
-  Future<File> loadImageFromAssets() async {
-    final byteData =
-        await rootBundle.load('assets/images/placeholder/avatar.jpg');
-    final file = File('${(await getTemporaryDirectory()).path}/avatar.jpg');
-    await file.writeAsBytes(byteData.buffer.asUint8List());
-    return file;
+  Future<Uint8List> compressImage(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) throw Exception('No se pudo decodificar la imagen');
+
+      final resizedImage = img.copyResize(image, width: 800);
+      return img.encodeJpg(resizedImage, quality: 85);
+    } catch (e) {
+      print('Error al comprimir imagen: $e');
+      return await imageFile.readAsBytes();
+    }
   }
 
-  Future<void> register(File? selectedImage, BuildContext context) async {
-    String imageUrl = '';
-    showLoadingOverlay();
-
-    if (selectedImage != null) {
+  Future<String?> _uploadImageWithRetry(File image, {int retries = 2}) async {
+    for (int i = 0; i < retries; i++) {
       try {
-        File imageToUpload;
-        if (selectedImage != null) {
-          imageToUpload = selectedImage;
-        } else {
-          imageToUpload = await loadImageFromAssets();
+        // Comprimir imagen
+        final compressedBytes = await compressImage(image);
+        final tempDir = await getTemporaryDirectory();
+        final compressedFile = File(
+            '${tempDir.path}/compressed_profile_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await compressedFile.writeAsBytes(compressedBytes);
+
+        // Verificar que el archivo existe
+        if (!await compressedFile.exists()) {
+          throw Exception('El archivo comprimido no se creó correctamente');
         }
 
-        Uint8List compressedImage = await compressImage(selectedImage);
-        File compressedFile = File('${selectedImage.path}_compressed.jpg');
-        await compressedFile.writeAsBytes(compressedImage);
+        // Subir a Cloudinary
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromFile(compressedFile.path,
+              filename: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg'),
+          'upload_preset': 'image_user_preset',
+          'folder': 'users',
+        });
 
-        String? uploadedImageUrl = await uploadImageDio(compressedFile);
-        if (uploadedImageUrl != null) {
-          imageUrl = uploadedImageUrl;
-        } else {
-          AppOverlay.showOverlay(
-              context, Colors.red, "Error al subir la imagen");
-          hideLoadingOverlay();
-          return;
+        final response = await Dio().post(
+          'https://api.cloudinary.com/v1_1/dvt90q1cu/upload',
+          data: formData,
+          options: Options(
+            sendTimeout: const Duration(seconds: 30),
+            receiveTimeout: const Duration(seconds: 30),
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          return response.data['secure_url'] as String;
         }
-      } on SocketException {
-        AppOverlay.showOverlay(
-            context, Colors.red, "No hay conexión a internet");
-        hideLoadingOverlay();
-        return;
-      } catch (err) {
-        AppOverlay.showOverlay(
-            context, Colors.red, "Ha ocurrido un error desconocido");
-        hideLoadingOverlay();
-        return;
+      } on DioException catch (e) {
+        print('Intento ${i + 1} fallido: ${e.message}');
+        if (i == retries - 1) rethrow;
+        await Future.delayed(const Duration(seconds: 1));
+      } catch (e) {
+        print('Intento ${i + 1} fallido: $e');
+        if (i == retries - 1) rethrow;
+        await Future.delayed(const Duration(seconds: 1));
       }
     }
+    return null;
+  }
 
-    final success = await widget.registerService.registerUser(
-      imageUrl,
-      widget.userData['name']!,
-      widget.userData['lastName']!,
-      widget.userData['email']!,
-      widget.userData['password']!,
-      widget.userData['phone']!,
-      widget.userData['city']!,
-      widget.userData['state']!,
-      widget.userData['country']!,
-    );
+  Future<void> registerUser(File? imageFile, BuildContext context) async {
+    String? imageUrl;
+    showLoadingOverlay();
 
-    if (success) {
+    try {
+      // Paso 1: Manejo de la imagen (solo si se proporciona)
+      if (imageFile != null) {
+        try {
+          imageUrl = await _uploadImageWithRetry(imageFile);
+          if (imageUrl == null) {
+            AppOverlay.showOverlay(context, Colors.orange,
+                "No se pudo subir la imagen. Continuando sin foto de perfil");
+          }
+        } catch (e) {
+          print('Error crítico al subir imagen: $e');
+          AppOverlay.showOverlay(context, Colors.orange,
+              "Error al procesar imagen, continuando sin ella");
+        }
+      }
+
+      // Paso 2: Validar datos requeridos
+      final requiredFields = ['name', 'lastName', 'email', 'password', 'phone'];
+      for (final field in requiredFields) {
+        if (widget.userData[field] == null || widget.userData[field]!.isEmpty) {
+          throw Exception('El campo $field es requerido');
+        }
+      }
+
+      // Paso 3: Registrar usuario (con o sin imagen)
+      final success = await widget.registerService.registerUser(
+        imageUrl ?? '', // Cadena vacía si no hay imagen
+        widget.userData['name']!,
+        widget.userData['lastName']!,
+        widget.userData['email']!,
+        widget.userData['password']!,
+        widget.userData['phone']!,
+        widget.userData['city'] ?? '',
+        widget.userData['state'] ?? '',
+        widget.userData['country'] ?? '',
+      );
+
+      if (!success) {
+        throw Exception('El servicio de registro devolvió false');
+      }
+
+      // Paso 4: Guardar credenciales y hacer login automático
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('email', widget.userData['email']!);
       await prefs.setString('password', widget.userData['password']!);
 
-      try {
-        final loginService = LoginService(ApiService());
-        await loginService.login(
-            widget.userData['email']!, widget.userData['password']!);
-        print('Cuenta creada exitosamente');
+      final loginService = LoginService(ApiService());
+      final loginSuccess = await loginService.login(
+          widget.userData['email']!, widget.userData['password']!);
+
+      // Paso 5: Navegar a la siguiente pantalla
+      if (mounted) {
         context.go('/newPetUser');
-      } catch (err) {
-        AppOverlay.showOverlay(context, Colors.red,
-            "Error al iniciar sesión automáticamente: $err");
       }
-    } else {
-      AppOverlay.showOverlay(context, Colors.red, "Error al crear la cuenta");
+    } catch (e) {
+      print('Error durante el registro: $e');
+      if (mounted) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "Error al crear la cuenta: ${e.toString()}");
+      }
+    } finally {
+      hideLoadingOverlay();
     }
-    hideLoadingOverlay();
   }
 
-  void showConfirmDialog(BuildContext context) {
+  void showImageConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text("Confirmar"),
-          content: Text("¿Deseas crear tu cuenta sin una foto de perfil?"),
+          title: const Text("¿Continuar sin imagen?"),
+          content: const Text(
+              "Puedes agregar una foto de perfil más tarde desde la configuración de tu cuenta."),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text("Cancelar"),
+              child: const Text("Cancelar"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                register(null, context);
+                registerUser(null, context);
               },
-              child: Text("Aceptar"),
+              child: const Text("Continuar"),
             ),
           ],
         );
@@ -201,15 +209,19 @@ class _ChooseImageState extends State<ChooseImage> {
   }
 
   void showLoadingOverlay() {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
   }
 
   void hideLoadingOverlay() {
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -218,102 +230,92 @@ class _ChooseImageState extends State<ChooseImage> {
       children: [
         Scaffold(
           appBar: AppBar(
-            title: Text('Escoge tu imagen de perfil'),
+            title: const Text('Foto de perfil'),
+            centerTitle: true,
           ),
-          body: Stack(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Form(
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Escoge una imagen de perfil',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Agrega una foto de perfil',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '(Opcional)',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 30),
+
+                // Área de selección de imagen
+                GestureDetector(
+                  onTap: () async {
+                    final image = await pickImage();
+                    if (image != null) {
+                      setState(() {
+                        _selectedImage = image;
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[200],
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: _selectedImage != null
+                        ? ClipOval(
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
                             ),
+                          )
+                        : const Icon(
+                            Icons.add_a_photo,
+                            size: 50,
+                            color: Colors.grey,
                           ),
-                          Text(
-                            '(Opcional)',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 30),
-                          GestureDetector(
-                            onTap: () async {
-                              final pickedImage = await pickImage();
-                              if (pickedImage != null) {
-                                setState(() {
-                                  _selectedImage = pickedImage;
-                                });
-                              }
-                            },
-                            child: CircleAvatar(
-                              radius: 120,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: _selectedImage != null
-                                  ? FileImage(_selectedImage!)
-                                  : null,
-                              child: _selectedImage == null
-                                  ? Icon(
-                                      Icons.add_a_photo,
-                                      size: 50,
-                                      color: Colors.grey[600],
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.8,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                if (_selectedImage != null) {
-                                  register(_selectedImage, context);
-                                } else {
-                                  showConfirmDialog(context);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Color.fromARGB(255, 228, 121, 59),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                              ),
-                              child: const Text(
-                                'Terminar de crear cuenta',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                // Botón de continuar
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_selectedImage != null) {
+                        registerUser(_selectedImage, context);
+                      } else {
+                        showImageConfirmationDialog(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE4793B),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'CONTINUAR',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
-        if (_isLoading) LoadingOverlay(),
+        if (_isLoading) const LoadingOverlay(),
       ],
     );
   }

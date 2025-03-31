@@ -63,8 +63,13 @@ final router = GoRouter(
     GoRoute(
       path: '/petCard',
       name: 'petCard',
-      builder: (context, state) =>
-          PetCard(petData: state.extra as Map<String, dynamic>),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return PetCard(
+          petData: extra['petData'],
+          onPetUpdated: extra['onPetUpdated'], // Pasa el callback
+        );
+      },
     ),
     GoRoute(
       path: '/newPet',

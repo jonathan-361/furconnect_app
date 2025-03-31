@@ -20,12 +20,19 @@ class _MatchPageState extends State<MatchPage> {
   List<dynamic> sendRequests = [];
   List<dynamic> receiveRequest = [];
   bool _isLoading = false;
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
     _loadSendRequest();
     _loadReceiveRequest();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   Future<void> _reloadReceiveRequests() async {
@@ -187,23 +194,31 @@ class _MatchPageState extends State<MatchPage> {
   }
 
   Future<void> _loadSendRequest() async {
+    if (_isDisposed) return;
+
     showLoadingOverlay();
     try {
       final requests = await widget.requestService.getSendRequest();
+      if (_isDisposed) return;
+
       final pendingRequests = requests
           .where((request) =>
               request['estado'] == 'pendiente' &&
               request['mascota_solicitante_id'] != null)
           .toList();
 
-      setState(() {
-        sendRequests = pendingRequests;
-      });
+      if (mounted) {
+        setState(() {
+          sendRequests = pendingRequests;
+        });
+      }
 
       hideLoadingOverlay();
     } catch (err) {
-      hideLoadingOverlay();
-      print("Error al cargar solicitudes enviadas: $err");
+      if (!_isDisposed) {
+        hideLoadingOverlay();
+        print("Error al cargar solicitudes enviadas: $err");
+      }
     }
   }
 
@@ -215,9 +230,11 @@ class _MatchPageState extends State<MatchPage> {
           .where((request) => request['estado'] == 'pendiente')
           .toList();
 
-      setState(() {
-        receiveRequest = pendingRequests;
-      });
+      if (mounted) {
+        setState(() {
+          receiveRequest = pendingRequests;
+        });
+      }
 
       for (var request in pendingRequests) {
         print(

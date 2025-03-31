@@ -38,26 +38,29 @@ class SocketService {
     _socket.disconnect();
   }
 
-  void sendMessage(String chatRoomId, String senderId, String content) {
+  void sendMessage(
+      String chatRoomId, String senderId, String content, String tempId) {
     try {
       _socket.emit('sendMessage', {
         'chatRoomId': chatRoomId,
         'sender': senderId,
         'content': content,
+        'tempId': tempId,
       });
     } catch (e) {
       print('Error al enviar mensaje: $e');
     }
   }
 
-  // Método para escuchar mensajes recibidos
   void onReceiveMessage(Function(Map<String, dynamic>) callback) {
     try {
       _socket.on('receiveMessage', (data) {
-        callback(data);
+        if (data['tempId'] == null) {
+          callback(data);
+        }
       });
-    } catch (e) {
-      print('Error al recibir mensaje: $e');
+    } catch (err) {
+      print('Error al recibir mensaje: $err');
     }
   }
 

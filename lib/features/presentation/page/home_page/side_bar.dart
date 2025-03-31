@@ -51,11 +51,6 @@ class SideBar extends StatelessWidget {
                   context.push('/profile');
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.settings),
-                title: Text('Configuración'),
-                onTap: () {},
-              ),
               /*
               ListTile(
                 leading: Icon(Icons.favorite),

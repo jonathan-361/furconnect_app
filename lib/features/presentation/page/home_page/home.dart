@@ -32,15 +32,19 @@ class HomePage extends StatelessWidget {
       key: _scaffoldKey,
       appBar: CustomAppBar(scaffoldKey: _scaffoldKey),
       drawer: SideBar(),
-      body: _HomePageBody(petService: petService),
+      body: _HomePageBody(
+        petService: petService,
+        userService: userService,
+      ),
     );
   }
 }
 
 class _HomePageBody extends StatefulWidget {
   final PetService petService;
+  final UserService userService;
 
-  const _HomePageBody({required this.petService});
+  const _HomePageBody({required this.petService, required this.userService});
 
   @override
   __HomePageBodyState createState() => __HomePageBodyState();
@@ -61,12 +65,49 @@ class __HomePageBodyState extends State<_HomePageBody> {
   String _raza = '';
   String _sexo = '';
   String _edad = '';
+  String _pais = '';
+  String _estado = '';
 
   @override
   void initState() {
     super.initState();
-    _loadPets();
+    _initializeHomeData();
+    _printUserStatus();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _initializeHomeData() async {
+    try {
+      // Primero obtener el ID del usuario
+      final userId = await _getUserId();
+      if (userId != null) {
+        // Cargar los datos del usuario para obtener país y estado
+        final userData = await widget.userService.getUserById(userId);
+
+        if (userData != null && mounted) {
+          setState(() {
+            _pais = userData['pais'] ?? '';
+            _estado = userData['estado'] ?? '';
+          });
+
+          print('Filtros iniciales - País: $_pais, Estado: $_estado');
+
+          _refreshPets();
+        } else if (mounted) {
+          AppOverlay.showOverlay(context, Colors.red,
+              "No se pudieron cargar los datos de ubicación");
+        }
+      } else if (mounted) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "No se pudo identificar al usuario");
+      }
+    } catch (err) {
+      if (mounted) {
+        print("Error al inicializar datos de home: $err");
+        AppOverlay.showOverlay(
+            context, Colors.red, "Error al cargar datos: $err");
+      }
+    }
   }
 
   @override
@@ -240,6 +281,8 @@ class __HomePageBodyState extends State<_HomePageBody> {
         _raza,
         _sexo,
         _edad,
+        _estado,
+        _pais,
       );
 
       if (!mounted) return;
@@ -323,6 +366,50 @@ class __HomePageBodyState extends State<_HomePageBody> {
     } catch (err) {
       print('Error al decodificar el token: $err');
       return null;
+    }
+  }
+
+  Future<String?> _getUserStatus() async {
+    try {
+      final userId = await _getUserId();
+      if (userId != null) {
+        final userData = await widget.userService.getUserById(userId);
+        return userData?['estatus'];
+      }
+      return null;
+    } catch (err) {
+      print('Error al obtener el estatus del usuario: $err');
+      return null;
+    }
+  }
+
+  void _printUserStatus() async {
+    final userState = await _getUserStatus();
+    if (userState != null) {
+      print('Estado del usuario: $userState');
+    } else {
+      print('No se pudo obtener el estado del usuario');
+    }
+  }
+
+  Future<void> _loadUserLocation() async {
+    try {
+      final userId = await _getUserId();
+      if (userId != null) {
+        final userData = await widget.userService.getUserById(userId);
+
+        if (userData != null && mounted) {
+          setState(() {
+            _pais = userData['pais'] ?? '';
+            _estado = userData['estado'] ?? '';
+          });
+          print('Filtros aplicados - País: $_pais, Estado: $_estado'); // Debug
+          // Recargar las mascotas con los nuevos filtros
+          _refreshPets();
+        }
+      }
+    } catch (err) {
+      print("Error al obtener la ubicación del usuario: $err");
     }
   }
 

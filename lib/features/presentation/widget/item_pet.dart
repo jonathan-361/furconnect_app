@@ -74,8 +74,13 @@ class ItemPet extends StatelessWidget {
           ],
         ),
         onTap: () async {
-          final shouldRefresh =
-              await context.pushNamed('petCard', extra: petData);
+          final shouldRefresh = await context.pushNamed(
+            'petCard',
+            extra: {
+              'petData': petData,
+              'onPetUpdated': onPetDeleted,
+            },
+          );
           if (shouldRefresh == true) {
             onPetDeleted?.call();
           }

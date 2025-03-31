@@ -54,6 +54,8 @@ class PetService {
     String raza,
     String sexo,
     String edad,
+    String estado,
+    String pais,
   ) async {
     final token = await _loginService.getToken();
 
@@ -70,6 +72,8 @@ class PetService {
           'raza': raza,
           'sexo': sexo,
           'edad': edad,
+          'estado': estado,
+          'pais': pais,
         },
         headers: {
           'Authorization': 'Bearer $token',
@@ -119,8 +123,8 @@ class PetService {
       } else {
         throw Exception("Error al obtener la mascota.");
       }
-    } on DioException catch (e) {
-      throw Exception("Error en la solicitud: ${e.message}");
+    } on DioException catch (err) {
+      throw Exception("Error en la solicitud: ${err.message}");
     }
   }
 
@@ -221,8 +225,9 @@ class PetService {
     }
   }
 
-  Future<bool> updatePet(
+  Future<bool> editPet(
     String petId,
+    String imagen,
     String nombre,
     String raza,
     String tipo,
@@ -235,6 +240,9 @@ class PetService {
     String temperamento,
     String usuarioId,
     List<String> media,
+    String pais,
+    String estado,
+    String ciudad,
   ) async {
     final token = await _loginService.getToken();
 
@@ -257,6 +265,9 @@ class PetService {
           "vacunas": vacunas,
           "temperamento": temperamento,
           "media": media,
+          "pais": pais,
+          "estado": estado,
+          "ciudad": ciudad,
         },
         headers: {
           'Authorization': 'Bearer $token',

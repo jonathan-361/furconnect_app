@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:ui';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
@@ -67,6 +69,10 @@ class __HomePageBodyState extends State<_HomePageBody> {
   String _edad = '';
   String _pais = '';
   String _estado = '';
+  String _tipo = '';
+  String dogIcon = 'assets/images/svg/dog.svg';
+  String catIcon = 'assets/images/svg/cat.svg';
+  String _userStatus = '';
 
   @override
   void initState() {
@@ -148,6 +154,20 @@ class __HomePageBodyState extends State<_HomePageBody> {
                               },
                             ),
                             FilterChip(
+                              label: Text('Perros'),
+                              selected: _tipo == 'perro',
+                              onSelected: (bool value) {
+                                _onTypeSelected('perro');
+                              },
+                            ),
+                            FilterChip(
+                              label: Text('Gatos'),
+                              selected: _tipo == 'gato',
+                              onSelected: (bool value) {
+                                _onTypeSelected('gato');
+                              },
+                            ),
+                            FilterChip(
                               label: Text('1 a 5 años'),
                               selected: _edad == '1-5',
                               onSelected: (bool value) {
@@ -184,67 +204,68 @@ class __HomePageBodyState extends State<_HomePageBody> {
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _refreshPets,
-                child: pets.isEmpty && !isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.pets,
-                              size: 70,
-                              color: Colors.grey[400],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              "Qué vacío se siente por aquí",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[700],
+                  onRefresh: _refreshPets,
+                  child: pets.isEmpty && !isLoading
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.pets,
+                                size: 70,
+                                color: Colors.grey[400],
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "¡Prueba con otros filtros!",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                              SizedBox(height: 16),
+                              Text(
+                                "Qué vacío se siente por aquí",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[700],
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    : GridView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.all(8.0),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: 0.8,
-                        ),
-                        itemCount: pets.length + (hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index < pets.length) {
-                            final petData = pets[index];
-                            return _buildPetCard(
-                              petData: petData,
-                              context: context,
-                            );
-                          } else {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: CircularProgressIndicator(),
+                              SizedBox(height: 8),
+                              Text(
+                                "¡Prueba con otros filtros!",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                            );
-                          }
-                        },
-                      ),
-              ),
+                            ],
+                          ),
+                        )
+                      : GridView.builder(
+                          controller: _scrollController,
+                          padding: EdgeInsets.all(8.0),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 0.8,
+                          ),
+                          itemCount: pets.length + (hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index < pets.length) {
+                              final petData = pets[index];
+                              return _buildPetCard(
+                                petData: petData,
+                                context: context,
+                                index: index, // Pass the index here
+                              );
+                            } else {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                          },
+                        )),
             ),
           ],
         ),
@@ -283,6 +304,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
         _edad,
         _estado,
         _pais,
+        _tipo,
       );
 
       if (!mounted) return;
@@ -351,6 +373,17 @@ class __HomePageBodyState extends State<_HomePageBody> {
     _refreshPets();
   }
 
+  void _onTypeSelected(String tipo) {
+    setState(() {
+      if (_tipo == tipo) {
+        _tipo = ''; // Si se presiona el mismo chip, quitar el filtro
+      } else {
+        _tipo = tipo; // Establecer el nuevo filtro
+      }
+    });
+    _refreshPets();
+  }
+
   Future<String?> _getUserId() async {
     try {
       final loginService = LoginService(ApiService());
@@ -374,7 +407,8 @@ class __HomePageBodyState extends State<_HomePageBody> {
       final userId = await _getUserId();
       if (userId != null) {
         final userData = await widget.userService.getUserById(userId);
-        return userData?['estatus'];
+        //return userData?['estatus'];
+        return 'premium';
       }
       return null;
     } catch (err) {
@@ -386,6 +420,12 @@ class __HomePageBodyState extends State<_HomePageBody> {
   void _printUserStatus() async {
     final userState = await _getUserStatus();
     if (userState != null) {
+      if (mounted) {
+        setState(() {
+          _userStatus = userState;
+        });
+      }
+
       print('Estado del usuario: $userState');
     } else {
       print('No se pudo obtener el estado del usuario');
@@ -445,12 +485,178 @@ class __HomePageBodyState extends State<_HomePageBody> {
   Widget _buildPetCard({
     required Map<String, dynamic> petData,
     required BuildContext context,
+    required int index,
   }) {
     final String? imageUrl =
         petData['imagen']?.isNotEmpty ?? false ? petData['imagen'] : null;
     final String name = petData['nombre'] ?? 'Sin nombre';
     final String city = petData['usuario_id']['ciudad'] ?? 'Sin ciudad';
+    final String typePet = petData['tipo'] ?? 'Sin tipo';
 
+    // Determine if this card should be blurred
+    final bool shouldBlur =
+        _userStatus.toLowerCase() == 'gratis' && index >= 10;
+
+    Widget petCard = Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(8)),
+                  child: imageUrl != null && imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Imagen no válida');
+                            return Image.asset(
+                              'assets/images/placeholder/pet_placeholder.jpg',
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          'assets/images/placeholder/pet_placeholder.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(0, 0, 0, 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      city,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(0, 0, 0, 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: typePet.toLowerCase() == 'perro'
+                          ? SvgPicture.asset(
+                              dogIcon,
+                              height: 20,
+                              width: 20,
+                              colorFilter: ColorFilter.mode(
+                                Colors.white,
+                                BlendMode.srcIn,
+                              ),
+                            )
+                          : SvgPicture.asset(
+                              catIcon,
+                              height: 20,
+                              width: 20,
+                              colorFilter: ColorFilter.mode(
+                                Colors.white,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                  ),
+                ),
+                _buildSexIcon(petData['sexo']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Apply blur effect and overlay for premium content
+    if (shouldBlur) {
+      petCard = Stack(
+        children: [
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: petCard,
+          ),
+          Positioned.fill(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'Contenido premium',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+
+      // Return non-clickable blurred card
+      return AbsorbPointer(
+        absorbing: true,
+        child: petCard,
+      );
+    }
+
+    // Return normal clickable card
     return GestureDetector(
       onTap: () => context.pushNamed(
         'petCardHome',
@@ -463,88 +669,7 @@ class __HomePageBodyState extends State<_HomePageBody> {
           },
         },
       ),
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(8)),
-                    child: imageUrl != null && imageUrl.isNotEmpty
-                        ? Image.network(
-                            imageUrl,
-                            fit:
-                                BoxFit.cover, // Mantiene la imagen proporcional
-                            width: double
-                                .infinity, // Asegura que la imagen ocupe todo el ancho disponible
-                            height: double
-                                .infinity, // Asegura que la imagen ocupe todo el alto disponible
-                            errorBuilder: (context, error, stackTrace) {
-                              print('Imagen no válida');
-                              return Image.asset(
-                                'assets/images/placeholder/pet_placeholder.jpg',
-                                fit: BoxFit.cover,
-                              );
-                            },
-                          )
-                        : Image.asset(
-                            'assets/images/placeholder/pet_placeholder.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                  ),
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: Container(
-                      margin: const EdgeInsets.all(8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color.fromRGBO(0, 0, 0, 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        city,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2, // Permite 2 líneas antes de cortar
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 3,
-                    ),
-                  ),
-                  _buildSexIcon(petData['sexo']),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: petCard,
     );
   }
 

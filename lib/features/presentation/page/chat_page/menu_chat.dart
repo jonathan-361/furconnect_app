@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'dart:ui';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
+import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/chat_service.dart';
 import 'package:furconnect/features/presentation/widget/chat/item_chat.dart';
 
@@ -16,14 +19,18 @@ class MenuChat extends StatefulWidget {
 class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
   final ChatService _chatService =
       ChatService(ApiService(), LoginService(ApiService()));
+  final UserService _userService =
+      UserService(ApiService(), LoginService(ApiService()));
   List<dynamic> _chats = [];
   bool isLoading = true;
   String? errorMessage;
+  String _userStatus = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _printUserStatus();
     _fetchChats();
   }
 
@@ -33,7 +40,6 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Este método detecta cuando la pantalla vuelve a estar visible (por ejemplo, después de regresar)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -41,11 +47,9 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
     }
   }
 
-  // Este método se llama cuando la aplicación se reanuda después de estar en segundo plano
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Verificar si esta pantalla está activa
     if (ModalRoute.of(context)?.isCurrent == true) {
       _fetchChats();
     }
@@ -62,21 +66,14 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
       final chatData = await _chatService.getChats();
 
       if (mounted) {
-        // Ordenar los chats por la fecha del último mensaje o novedad del chat
         chatData.sort((a, b) {
-          // Obtener el último mensaje de cada chat
           final aMessages = a['mensajes'] ?? [];
           final bMessages = b['mensajes'] ?? [];
-
-          // Extraer timestamps de los IDs (asumiendo que son ObjectIds de MongoDB)
           final String aId = a['_id'] ?? '';
           final String bId = b['_id'] ?? '';
-
-          // Obtener versión (puede indicar cuán reciente es un chat)
           final int aVersion = a['__v'] ?? 0;
           final int bVersion = b['__v'] ?? 0;
 
-          // Para chats con mensajes, usar el timestamp del último mensaje
           if (aMessages.isNotEmpty && bMessages.isNotEmpty) {
             final aTimestamp =
                 aMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
@@ -85,46 +82,30 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
             return bTimestamp.compareTo(aTimestamp);
           }
 
-          // Si un chat tiene mensajes y el otro no, el que tiene mensajes va primero
-          // a menos que el chat sin mensajes sea más nuevo (basado en ID)
           if (aMessages.isNotEmpty && bMessages.isEmpty) {
-            // Comparar timestamp del mensaje con la "novedad" del chat B
             final aTimestamp =
                 aMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
-
-            // Si el ID de B parece más reciente, B va primero
             if (bId.compareTo(aId) > 0) {
-              return 1; // B es más reciente (por ID), así que B va primero
+              return 1;
             }
-
-            // Si la versión de B es mayor, B podría ser más reciente
             if (bVersion > aVersion) {
-              return 1; // B podría ser más reciente (por versión), así que B va primero
+              return 1;
             }
-
-            return -1; // A tiene mensajes y B no parece más reciente, así que A va primero
+            return -1;
           }
 
           if (bMessages.isNotEmpty && aMessages.isEmpty) {
-            // Comparar timestamp del mensaje con la "novedad" del chat A
             final bTimestamp =
                 bMessages.last['timestamp'] ?? '1970-01-01T00:00:00.000Z';
-
-            // Si el ID de A parece más reciente, A va primero
             if (aId.compareTo(bId) > 0) {
-              return -1; // A es más reciente (por ID), así que A va primero
+              return -1;
             }
-
-            // Si la versión de A es mayor, A podría ser más reciente
             if (aVersion > bVersion) {
-              return -1; // A podría ser más reciente (por versión), así que A va primero
+              return -1;
             }
-
-            return 1; // B tiene mensajes y A no parece más reciente, así que B va primero
+            return 1;
           }
 
-          // Si ninguno tiene mensajes, ordenar por ID (asumiendo que los IDs más recientes son mayores)
-          // Lo que funciona bien con ObjectIds de MongoDB
           return bId.compareTo(aId);
         });
 
@@ -151,71 +132,149 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
         title: const Text('Mensajes'),
         backgroundColor: const Color(0xFF894936),
       ),
-      body: RefreshIndicator(
-          onRefresh: _fetchChats,
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : errorMessage != null
-                  ? Center(
-                      child: Text(
-                        errorMessage!,
-                        style: const TextStyle(fontSize: 18, color: Colors.red),
-                      ),
-                    )
-                  : _chats.isNotEmpty
-                      ? ListView.builder(
-                          itemCount: _chats.length,
-                          itemBuilder: (context, index) {
-                            final chat = _chats[index];
-                            return ItemChat(
-                              chat: chat,
-                              onTap: () => _navigateToChat(context, chat),
-                            );
-                          },
-                        )
-                      : Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.pets,
-                                size: 70,
-                                color: Colors.grey[400],
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No tienes chats aún',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[700],
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _fetchChats,
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : errorMessage != null
+                    ? Center(
+                        child: Text(
+                          errorMessage!,
+                          style:
+                              const TextStyle(fontSize: 18, color: Colors.red),
+                        ),
+                      )
+                    : _chats.isNotEmpty
+                        ? ListView.builder(
+                            itemCount: _chats.length,
+                            itemBuilder: (context, index) {
+                              final chat = _chats[index];
+                              return ItemChat(
+                                chat: chat,
+                                onTap: () => _navigateToChat(context, chat),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.pets,
+                                  size: 70,
+                                  color: Colors.grey[400],
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No tienes chats aún',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[700],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                        )),
+          ),
+          if (_userStatus == 'gratis')
+            IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  backgroundBlendMode: BlendMode.lighten,
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
+            ),
+          if (_userStatus == 'gratis')
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock, size: 50, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Actualiza a Premium para ver tus chats',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF894936),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () {
+                      // Navegar a la pantalla de actualización a premium
+                      context.push('/furconnectPlus');
+                    },
+                    child: const Text(
+                      'Actualizar a Premium',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  // Método para navegar al chat y actualizar al regresar
   Future<void> _navigateToChat(
       BuildContext context, Map<String, dynamic> chat) async {
+    if (_userStatus == 'gratis') {
+      // Mostrar diálogo o mensaje indicando que necesita ser premium
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Función Premium'),
+          content: const Text(
+              'Necesitas actualizar a Premium para acceder a los chats.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/furconnectPlus');
+              },
+              child: const Text('Actualizar'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final chatId = chat['_id'];
     final name = await getNameForChat(chat);
 
-    // Navegar y esperar resultado
     await context.push<bool>('/chat', extra: {
       'chatId': chatId,
       'name': name,
-      'onMessageSent': true, // Indica que queremos saber si se envió un mensaje
+      'onMessageSent': true,
     });
 
-    // Refrescar siempre al regresar
     _fetchChats();
   }
 
-  // Método para obtener el nombre del chat
   Future<String> getNameForChat(Map<String, dynamic> chat) async {
     try {
       final loginService = LoginService(ApiService());
@@ -231,11 +290,55 @@ class _MenuChatState extends State<MenuChat> with WidgetsBindingObserver {
         return "Usuario desconocido";
       }
 
-      // Este código es simplificado y deberías usar tu lógica real aquí
       return usuarios[1]["nombre"] ?? "Usuario desconocido";
     } catch (err) {
       print('Error al obtener el nombre: $err');
       return "Usuario desconocido";
+    }
+  }
+
+  Future<String?> _getUserId() async {
+    try {
+      final loginService = LoginService(ApiService());
+      await loginService.loadToken();
+      final token = loginService.authToken;
+
+      if (token == null) {
+        return null;
+      }
+
+      final decodedToken = JwtDecoder.decode(token);
+      return decodedToken['id'];
+    } catch (err) {
+      print('Error al decodificar el token: $err');
+      return null;
+    }
+  }
+
+  Future<String?> _getUserStatus() async {
+    try {
+      final userId = await _getUserId();
+      if (userId != null) {
+        final userData = await _userService.getUserById(userId);
+        //return userData?['estatus'];
+        return 'premium';
+      }
+      return null;
+    } catch (err) {
+      print('Error al obtener el estatus del usuario: $err');
+      return null;
+    }
+  }
+
+  void _printUserStatus() async {
+    final userState = await _getUserStatus();
+    if (userState != null) {
+      setState(() {
+        _userStatus = userState;
+      });
+      print('Estado del usuario: $userState');
+    } else {
+      print('No se pudo obtener el estado del usuario');
     }
   }
 }

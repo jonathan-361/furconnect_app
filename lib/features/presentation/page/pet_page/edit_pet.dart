@@ -14,7 +14,7 @@ import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/data/services/cloudinary_service.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
-import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedList.dart';
+import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedListPC.dart';
 import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
@@ -60,6 +60,7 @@ class _EditPetState extends State<EditPet> {
   String? selectedSize;
   String? selectedGender;
   String? selectedTemperament;
+  String? selectedPetType;
   List<String> vaccines = [];
   List<File?> _selectedImages = [null, null, null, null];
   bool _imageError = false;
@@ -70,6 +71,8 @@ class _EditPetState extends State<EditPet> {
 
   final List<String> sizes = ['Pequeño', 'Mediano', 'Grande'];
   final List<String> genders = ['Macho', 'Hembra'];
+  final List<String> petTypes = breedList.map((e) => e.keys.first).toList();
+
   List<String> _existingImageUrls = [];
 
   String petPlus = 'assets/images/svg/pet.svg';
@@ -232,81 +235,39 @@ class _EditPetState extends State<EditPet> {
                               return null;
                             },
                           ),
+                          FixedHeightDropdownField<String>(
+                            value: selectedPetType,
+                            labelText: 'Tipo de mascota',
+                            enabled:
+                                false, // ¿Estás seguro de que quieres deshabilitarlo?
+                            items: petTypes.map((String type) {
+                              return DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              );
+                            }).toList(),
+                            onChanged: (String? newType) {
+                              setState(() {
+                                selectedPetType = newType;
+                                _breedController.clear();
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Por favor selecciona el tipo";
+                              }
+                              return null;
+                            },
+                          ),
                           Container(
                             height: 70,
-                            child: Autocomplete<String>(
-                              optionsBuilder:
-                                  (TextEditingValue textEditingValue) {
-                                if (textEditingValue.text.isEmpty) {
-                                  return const Iterable<String>.empty();
-                                }
-                                return breedList.where((breed) => breed
-                                    .toLowerCase()
-                                    .contains(
-                                        textEditingValue.text.toLowerCase()));
-                              },
-                              onSelected: (String selection) {
-                                _breedController.text = selection;
-                              },
-                              fieldViewBuilder: (context, controller, focusNode,
-                                  onEditingComplete) {
-                                // Reemplazamos el controlador temporal por nuestro controlador persistente
-                                controller.text = _breedController.text;
-                                return StatefulBuilder(
-                                  builder: (context, setState) {
-                                    String? errorText;
-                                    return TextFormField(
-                                      controller: controller,
-                                      focusNode: focusNode,
-                                      onEditingComplete: onEditingComplete,
-                                      enabled: false,
-                                      decoration: InputDecoration(
-                                        labelText: "Raza",
-                                        counterText: '',
-                                        errorText: errorText,
-                                      ),
-                                      style: const TextStyle(fontSize: 17),
-                                      maxLength: 18,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                          RegExp(r'^[a-zA-ñÑZáéíóúÁÉÍÓÚ\s]+$'),
-                                        ),
-                                      ],
-                                      validator: (value) {
-                                        _breedController.text = controller.text;
-                                        if (value == null || value.isEmpty) {
-                                          setState(() {
-                                            errorText =
-                                                "Por favor ingresa una raza";
-                                          });
-                                          return "Por favor ingresa una raza";
-                                        }
-                                        if (!breedList.any((breed) =>
-                                            breed.toLowerCase() ==
-                                            value.trim().toLowerCase())) {
-                                          setState(() {
-                                            errorText =
-                                                "Selecciona una raza válida de la lista";
-                                          });
-                                          return "Selecciona una raza válida de la lista";
-                                        }
-                                        setState(() {
-                                          errorText = null;
-                                        });
-                                        return null;
-                                      },
-                                      onChanged: (text) {
-                                        _breedController.text = text;
-                                        if (errorText != null) {
-                                          setState(() {
-                                            errorText = null;
-                                          });
-                                        }
-                                      },
-                                    );
-                                  },
-                                );
-                              },
+                            child: TextFormField(
+                              controller: _breedController,
+                              decoration: InputDecoration(
+                                labelText: "Raza",
+                                enabled: false, // Esto deshabilita el campo
+                              ),
+                              style: TextStyle(fontSize: 17),
                             ),
                           ),
                           FixedHeightFormField(
@@ -522,11 +483,20 @@ class _EditPetState extends State<EditPet> {
       final sizePet = petData['tamaño']?.toString();
       final genderPet = petData['sexo']?.toString();
       final temperamentPet = petData['temperamento']?.toString();
+      final typePetBreed = petData['tipo']?.toString();
 
       _nameController.text = petData['nombre'] ?? '';
       _breedController.text = petData['raza'] ?? '';
       _colorController.text = petData['color'] ?? '';
       _ageController.text = petData['edad']?.toString() ?? '';
+
+      if (typePetBreed != null) {
+        selectedPetType = petTypes.firstWhere(
+          (type) => type.toLowerCase() == typePetBreed.toLowerCase(),
+          orElse: () => typePetBreed,
+        );
+      }
+
       if (petData['vacunas'] != null) {
         if (petData['vacunas'] is List) {
           vaccines = List<String>.from(petData['vacunas'])
@@ -725,10 +695,34 @@ class _EditPetState extends State<EditPet> {
     final usuarioId = await _getUserId();
 
     if (_formKey.currentState?.validate() ?? false) {
-      if (!breedList.any((breed) =>
+      if (selectedPetType == null) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "Por favor selecciona el tipo de mascota");
+        return false;
+      }
+
+      final breedsForType = breedList.firstWhere(
+            (map) => map.keys.first == selectedPetType?.toLowerCase(),
+            orElse: () => {},
+          )[selectedPetType?.toLowerCase()] ??
+          [];
+
+      if (!breedsForType.any((breed) =>
           breed.toLowerCase() == _breedController.text.trim().toLowerCase())) {
         AppOverlay.showOverlay(context, Colors.red,
             "Por favor selecciona una raza válida de la lista");
+        return false;
+      }
+
+      // Reemplaza la condición de validación con esta:
+      if ((_selectedImages.isEmpty ||
+              _selectedImages.every((image) => image == null)) &&
+          _existingImageUrls.isEmpty) {
+        setState(() {
+          _imageError = true;
+        });
+        AppOverlay.showOverlay(
+            context, Colors.red, "Debe seleccionar al menos una imagen.");
         return false;
       }
 
@@ -820,6 +814,7 @@ class _EditPetState extends State<EditPet> {
         showLoadingOverlay();
         String breedText = _breedController.text.toLowerCase();
         String gender = (selectedGender ?? 'No definido aún').toLowerCase();
+        String petType = selectedPetType!.toLowerCase();
 
         final locationData = await getCountryStateCityUser();
 
@@ -835,7 +830,7 @@ class _EditPetState extends State<EditPet> {
           mainImage,
           _nameController.text,
           breedText,
-          'perro',
+          petType,
           _colorController.text,
           currentSize ?? 'Tamaño desconocido',
           agePet,

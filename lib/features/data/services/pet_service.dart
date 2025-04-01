@@ -55,6 +55,7 @@ class PetService {
     String edad,
     String estado,
     String pais,
+    String tipo,
   ) async {
     final token = await _loginService.getToken();
 
@@ -73,6 +74,7 @@ class PetService {
           'edad': edad,
           'estado': estado,
           'pais': pais,
+          'tipo': tipo,
         },
         headers: {
           'Authorization': 'Bearer $token',

@@ -46,16 +46,18 @@ class Profile extends StatelessWidget {
           future: _loadUserData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              // Mientras se cargan los datos
               return Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              // En caso de error
               return Center(child: Text('Error al cargar los datos'));
             } else if (snapshot.hasData) {
               final userData = snapshot.data;
               final userName = userData?['nombre'] ?? 'Usuario no encontrado';
               final userEmail = userData?['email'] ?? 'Correo no disponible';
               final userImage = userData?['imagen'];
+              final userStatus = userData?['estatus'] ??
+                  'gratis'; // Asumimos 'gratis' por defecto
+
+              final isPremium = userStatus == 'premium';
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -137,20 +139,23 @@ class Profile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Consigue FurConnect+',
+                            isPremium
+                                ? 'Gracias por adquirir FurConnect+'
+                                : 'Consigue FurConnect+',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            '¡Descubre más posibles parejas para tu mascota!',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
+                          if (!isPremium) SizedBox(height: 8),
+                          if (!isPremium)
+                            Text(
+                              '¡Descubre más posibles parejas para tu mascota!',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[700],
+                              ),
                             ),
-                          ),
                           SizedBox(height: 16),
                           Center(
                             child: ElevatedButton(
@@ -164,7 +169,9 @@ class Profile extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                'Consigue FurConnect+',
+                                isPremium
+                                    ? 'Ver sobre FurConnect+'
+                                    : 'Consigue FurConnect+',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

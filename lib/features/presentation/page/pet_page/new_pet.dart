@@ -13,7 +13,7 @@ import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
 import 'package:furconnect/features/data/services/pet_service.dart';
 import 'package:furconnect/features/presentation/page/pet_page/listOptions/temperamentList.dart';
-import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedList.dart';
+import 'package:furconnect/features/presentation/page/pet_page/listOptions/breedListPC.dart';
 import 'package:furconnect/features/presentation/widget/overlays/overlay.dart';
 import 'package:furconnect/features/presentation/widget/overlays/loading_overlay.dart';
 
@@ -219,6 +219,7 @@ class _NewPetState extends State<NewPet> {
   String? selectedSize;
   String? selectedGender;
   String? selectedTemperament;
+  String? selectedPetType;
   List<String> vaccines = [];
   List<File?> _selectedImages = [null, null, null, null];
   bool _imageError = false;
@@ -227,6 +228,7 @@ class _NewPetState extends State<NewPet> {
 
   final List<String> sizes = ['Pequeño', 'Mediano', 'Grande'];
   final List<String> genders = ['Macho', 'Hembra'];
+  final List<String> petTypes = breedList.map((e) => e.keys.first).toList();
 
   String petPlus = 'assets/images/svg/pet.svg';
   bool _isLoading = false;
@@ -253,7 +255,7 @@ class _NewPetState extends State<NewPet> {
                 size: 30,
               ),
               onPressed: () {
-                context.pop();
+                context.pop(true);
               },
             ),
           ),
@@ -339,15 +341,49 @@ class _NewPetState extends State<NewPet> {
                               return null;
                             },
                           ),
+                          FixedHeightDropdownField<String>(
+                            value: selectedPetType,
+                            labelText: 'Tipo de mascota',
+                            items: petTypes.map((String type) {
+                              return DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              );
+                            }).toList(),
+                            onChanged: (String? newType) {
+                              setState(() {
+                                selectedPetType = newType;
+                                _breedController
+                                    .clear(); // Limpia la raza cuando cambia el tipo
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Por favor selecciona el tipo";
+                              }
+                              return null;
+                            },
+                          ),
                           Container(
                             height: 70,
                             child: Autocomplete<String>(
                               optionsBuilder:
                                   (TextEditingValue textEditingValue) {
-                                if (textEditingValue.text.isEmpty) {
+                                if (textEditingValue.text.isEmpty ||
+                                    selectedPetType == null) {
                                   return const Iterable<String>.empty();
                                 }
-                                return breedList.where((breed) => breed
+
+                                // Obtiene la lista de razas para el tipo seleccionado
+                                final breedsForType = breedList.firstWhere(
+                                      (map) =>
+                                          map.keys.first ==
+                                          selectedPetType?.toLowerCase(),
+                                      orElse: () => {},
+                                    )[selectedPetType?.toLowerCase()] ??
+                                    [];
+
+                                return breedsForType.where((breed) => breed
                                     .toLowerCase()
                                     .contains(
                                         textEditingValue.text.toLowerCase()));
@@ -357,7 +393,6 @@ class _NewPetState extends State<NewPet> {
                               },
                               fieldViewBuilder: (context, controller, focusNode,
                                   onEditingComplete) {
-                                // Reemplazamos el controlador temporal por nuestro controlador persistente
                                 controller.text = _breedController.text;
                                 return StatefulBuilder(
                                   builder: (context, setState) {
@@ -370,6 +405,9 @@ class _NewPetState extends State<NewPet> {
                                         labelText: "Raza",
                                         counterText: '',
                                         errorText: errorText,
+                                        hintText: selectedPetType == null
+                                            ? "Selecciona primero el tipo"
+                                            : "Escribe para buscar",
                                       ),
                                       style: const TextStyle(fontSize: 17),
                                       maxLength: 18,
@@ -387,7 +425,26 @@ class _NewPetState extends State<NewPet> {
                                           });
                                           return "Por favor ingresa una raza";
                                         }
-                                        if (!breedList.any((breed) =>
+
+                                        if (selectedPetType == null) {
+                                          setState(() {
+                                            errorText =
+                                                "Primero selecciona el tipo de mascota";
+                                          });
+                                          return "Primero selecciona el tipo de mascota";
+                                        }
+
+                                        final breedsForType = breedList
+                                                .firstWhere(
+                                              (map) =>
+                                                  map.keys.first ==
+                                                  selectedPetType
+                                                      ?.toLowerCase(),
+                                              orElse: () => {},
+                                            )[selectedPetType?.toLowerCase()] ??
+                                            [];
+
+                                        if (!breedsForType.any((breed) =>
                                             breed.toLowerCase() ==
                                             value.trim().toLowerCase())) {
                                           setState(() {
@@ -396,6 +453,7 @@ class _NewPetState extends State<NewPet> {
                                           });
                                           return "Selecciona una raza válida de la lista";
                                         }
+
                                         setState(() {
                                           errorText = null;
                                         });
@@ -409,6 +467,8 @@ class _NewPetState extends State<NewPet> {
                                           });
                                         }
                                       },
+                                      enabled: selectedPetType !=
+                                          null, // Deshabilita si no hay tipo seleccionado
                                     );
                                   },
                                 );
@@ -750,13 +810,29 @@ class _NewPetState extends State<NewPet> {
     final usuarioId = await _getUserId();
 
     if (_formKey.currentState?.validate() ?? false) {
-      if (!breedList.any((breed) =>
+      // Validación del tipo de mascota
+      if (selectedPetType == null) {
+        AppOverlay.showOverlay(
+            context, Colors.red, "Por favor selecciona el tipo de mascota");
+        return false;
+      }
+
+      // Validación de la raza según el tipo seleccionado
+      final breedsForType = breedList.firstWhere(
+            (map) => map.keys.first == selectedPetType?.toLowerCase(),
+            orElse: () => {},
+          )[selectedPetType?.toLowerCase()] ??
+          [];
+
+      if (!breedsForType.any((breed) =>
           breed.toLowerCase() == _breedController.text.trim().toLowerCase())) {
         AppOverlay.showOverlay(context, Colors.red,
             "Por favor selecciona una raza válida de la lista");
         return false;
       }
-      if (_selectedImages.isEmpty) {
+
+      if (_selectedImages.isEmpty ||
+          _selectedImages.every((image) => image == null)) {
         setState(() {
           _imageError = true;
         });
@@ -768,9 +844,10 @@ class _NewPetState extends State<NewPet> {
       int agePet = int.parse(_ageController.text);
 
       try {
-        if (_selectedImages.isNotEmpty) {
+        // Subir imágenes solo si hay imágenes seleccionadas
+        List<File> nonNullImages = _selectedImages.whereType<File>().toList();
+        if (nonNullImages.isNotEmpty) {
           showLoadingOverlay();
-          List<File> nonNullImages = _selectedImages.whereType<File>().toList();
           List<String> uploadedUrls = await uploadImagesDio(nonNullImages);
 
           if (uploadedUrls.isNotEmpty) {
@@ -793,7 +870,7 @@ class _NewPetState extends State<NewPet> {
 
         String breedText = _breedController.text.toLowerCase();
         String gender = (selectedGender ?? 'No definido aún').toLowerCase();
-        print('Genero de mi mascota es: $breedText');
+        String petType = selectedPetType!.toLowerCase();
 
         final locationData = await getCountryStateCityUser();
 
@@ -805,7 +882,7 @@ class _NewPetState extends State<NewPet> {
           mainImage,
           _nameController.text,
           breedText,
-          'perro',
+          petType, // Usamos el tipo seleccionado
           _colorController.text,
           selectedSize ?? 'Tamaño desconocido',
           agePet,
@@ -824,11 +901,10 @@ class _NewPetState extends State<NewPet> {
           AppOverlay.showOverlay(
               context, Colors.green, "Mascota registrada con éxito");
           hideLoadingOverlay();
-          print(_error);
 
           Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted) {
-              context.pop();
+              context.pop(true);
             }
           });
           return true;
@@ -844,12 +920,10 @@ class _NewPetState extends State<NewPet> {
       } on SocketException catch (_) {
         setState(() {
           _error = 'Error de conexión. Verifica tu conexión a internet.';
-          hideLoadingOverlay();
         });
         AppOverlay.showOverlay(
             context, Colors.red, "Verifica tu conexión a internet.");
         hideLoadingOverlay();
-        print(_error);
         return false;
       } catch (err) {
         setState(() {
@@ -858,7 +932,6 @@ class _NewPetState extends State<NewPet> {
         AppOverlay.showOverlay(
             context, Colors.red, "Error al registrar la mascota: $err");
         hideLoadingOverlay();
-        print(_error);
         return false;
       }
     }

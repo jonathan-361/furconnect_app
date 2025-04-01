@@ -172,11 +172,20 @@ class _PetCardState extends State<PetCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _infoRow(
+              Icons.pets,
+              "Tipo",
+              _formatWord(_currentPetData['tipo']),
+            ),
+            _infoRow(
               Icons.category,
               "Raza",
               _formatWord(_currentPetData['raza']),
             ),
-            _infoRow(Icons.cake, "Edad", "${_currentPetData['edad']} años"),
+            _infoRow(
+              Icons.cake,
+              "Edad",
+              "${_currentPetData['edad']} años",
+            ),
             _infoRow(
               Icons.color_lens,
               "Color",

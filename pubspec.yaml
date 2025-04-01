@@ -31,6 +31,8 @@ dependencies:
   cached_network_image: ^3.4.1
   socket_io_client: ^3.0.2
   emoji_picker_flutter: ^4.3.0
+  url_launcher: ^6.3.1
+  webview_flutter_plus: ^0.4.12
 
 
 
@@ -40,8 +42,6 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
-
-
 
 
 flutter:
@@ -59,6 +59,8 @@ flutter:
     - assets/images/svg/pet.svg
     - assets/images/svg/send-plane-2-line.svg
     - assets/images/svg/emotion-happy-line.svg
+    - assets/images/svg/dog.svg
+    - assets/images/svg/cat.svg
     - assets/images/svg/attachment-2.svg
 
   fonts:

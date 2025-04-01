@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
@@ -34,6 +35,8 @@ class _PetCardHomeState extends State<PetCardHome> {
 
   String ciudad = '';
   String estado = '';
+  String dogIcon = 'assets/images/svg/dog.svg';
+  String catIcon = 'assets/images/svg/cat.svg';
 
   @override
   void initState() {
@@ -198,7 +201,37 @@ class _PetCardHomeState extends State<PetCardHome> {
                                         size: 30,
                                       ),
                                     ),
-                                  )
+                                  ),
+                                  Spacer(),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 25),
+                                    child: Container(
+                                      padding: const EdgeInsets.only(
+                                        top: 26,
+                                        bottom: 0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: widget.petData['tipo'] == 'perro'
+                                          ? SvgPicture.asset(
+                                              dogIcon,
+                                              height: 40,
+                                              width: 40,
+                                              colorFilter: ColorFilter.mode(
+                                                  Colors.brown.shade800,
+                                                  BlendMode.srcIn),
+                                            )
+                                          : SvgPicture.asset(
+                                              catIcon,
+                                              height: 40,
+                                              width: 40,
+                                              colorFilter: ColorFilter.mode(
+                                                  Colors.brown.shade800,
+                                                  BlendMode.srcIn),
+                                            ),
+                                    ),
+                                  ),
                                 ],
                               ),
                               Padding(

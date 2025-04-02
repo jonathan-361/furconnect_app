@@ -22,7 +22,6 @@ import 'package:furconnect/features/presentation/page/match_page/match.dart';
 import 'package:furconnect/features/presentation/page/profile_page/profile.dart';
 import 'package:furconnect/features/presentation/widget/pet_card_home.dart';
 import 'package:furconnect/features/presentation/page/chat_page/chat_page.dart';
-import 'package:furconnect/features/presentation/page/suscription/payment.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -83,10 +82,6 @@ final router = GoRouter(
     GoRoute(
       path: '/furconnectPlus',
       builder: (context, state) => SubscriptionScreen(),
-    ),
-    GoRoute(
-      path: '/payment',
-      builder: (context, state) => PaymentPage(),
     ),
     GoRoute(
       path: '/home',

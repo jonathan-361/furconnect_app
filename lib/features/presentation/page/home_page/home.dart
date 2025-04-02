@@ -407,8 +407,8 @@ class __HomePageBodyState extends State<_HomePageBody> {
       final userId = await _getUserId();
       if (userId != null) {
         final userData = await widget.userService.getUserById(userId);
-        //return userData?['estatus'];
-        return 'premium';
+        return userData?['estatus'];
+        //return 'premium';
       }
       return null;
     } catch (err) {

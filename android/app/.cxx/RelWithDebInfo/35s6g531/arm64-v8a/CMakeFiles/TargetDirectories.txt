@@ -1,0 +1,2 @@
+C:/Users/Jonathan/Documents/Aplicaciones flutter/Proyecto final/furconnect/android/app/.cxx/RelWithDebInfo/35s6g531/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/Jonathan/Documents/Aplicaciones flutter/Proyecto final/furconnect/android/app/.cxx/RelWithDebInfo/35s6g531/arm64-v8a/CMakeFiles/rebuild_cache.dir

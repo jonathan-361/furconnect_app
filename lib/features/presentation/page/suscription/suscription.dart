@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:furconnect/features/data/services/api_service.dart';
 import 'package:furconnect/features/data/services/login_service.dart';
 import 'package:furconnect/features/data/services/user_service.dart';
+import 'package:furconnect/features/data/services/payment_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -17,6 +18,8 @@ class SubscriptionScreen extends StatefulWidget {
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   final UserService _userService =
       UserService(ApiService(), LoginService(ApiService()));
+  final PaymentService _paymentService =
+      PaymentService(ApiService(), LoginService(ApiService()));
 
   String _userStatus = '';
   bool _isLoading = true;
@@ -42,6 +45,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Future<void> _launchUrl() async {
     if (!await launchUrl(_url)) {
       throw Exception('Could not launch $_url');
+    }
+  }
+
+  Future<String> _getUserId() async {
+    try {
+      final loginService = LoginService(ApiService());
+      await loginService.loadToken();
+      final token = loginService.authToken;
+
+      if (token == null) {
+        throw Exception('Token is null');
+      }
+
+      final decodedToken = JwtDecoder.decode(token);
+      return decodedToken['id'];
+    } catch (err) {
+      print('Error al decodificar el token: $err');
+      throw Exception('Failed to get user ID: $err');
     }
   }
 
@@ -143,12 +164,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         ),
       );
     } else {
-      return ElevatedButton(
+      return // subscription.dart (solo el método modificado)
+          ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.orange,
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
         ),
-        onPressed: () {
+        onPressed: () async {
+          //final userId = await _getUserId();
           _launchUrl();
         },
         child: const Center(
@@ -206,24 +229,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         ],
       ),
     );
-  }
-
-  Future<String?> _getUserId() async {
-    try {
-      final loginService = LoginService(ApiService());
-      await loginService.loadToken();
-      final token = loginService.authToken;
-
-      if (token == null) {
-        return null;
-      }
-
-      final decodedToken = JwtDecoder.decode(token);
-      return decodedToken['id'];
-    } catch (err) {
-      print('Error al decodificar el token: $err');
-      return null;
-    }
   }
 
   Future<String?> _getUserStatus() async {

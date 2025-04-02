@@ -52,8 +52,8 @@ class _MyPetsState extends State<MyPets> {
       final userId = await _getUserId();
       if (userId != null) {
         final userData = await _userService.getUserById(userId);
-        //return userData?['estatus'];
-        return 'premium';
+        return userData?['estatus'];
+        //return 'premium';
       }
       return null;
     } catch (err) {
